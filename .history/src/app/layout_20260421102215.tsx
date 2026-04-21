@@ -14,11 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Offerlu.lk",
-    template: "%s · Offerlu.lk",
+    default: "OFFERSU",
+    template: "%s · OFFERSU",
   },
-  description:
-    "Discover offers, bank promos, and seasonal deals across Sri Lanka.",
+  description: "OFFERSLU web application",
 };
 
 export default function RootLayout({
