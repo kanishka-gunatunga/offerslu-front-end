@@ -44,5 +44,5 @@ next-env.d.ts
 # local CMS JSON (created when you save from admin)
 /data/site-content.json
 
-.Agents.md
-.Claude.md
+AGENTS.md
+CLAUDE.md
