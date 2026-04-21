@@ -15,7 +15,7 @@ export function HeroSection({ hero }: { hero: HeroContent }) {
         sizes="100vw"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/45 to-slate-900/25" />
-      <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 pb-16 pt-20 text-center sm:px-6 lg:px-8 lg:pb-20 lg:pt-24">
+      <div className="relative mx-auto flex max-w-[88rem] flex-col items-center px-4 pb-16 pt-20 text-center sm:px-6 lg:px-8 lg:pb-20 lg:pt-24">
         <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white drop-shadow-sm sm:text-5xl">
           {hero.title}
         </h1>

@@ -23,7 +23,7 @@ export default async function AdminPrivateLayout({
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
+        <div className="mx-auto flex max-w-368 flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-10">
             <AdminBrand />
             <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium">
@@ -62,7 +62,7 @@ export default async function AdminPrivateLayout({
           </form>
         </div>
       </header>
-      <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6">{children}</div>
+      <div className="mx-auto max-w-368 px-4 py-24 sm:px-6">{children}</div>
     </div>
   );
 }

@@ -645,7 +645,7 @@ function EntityCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+    <div className="flex h-[420px] flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 md:h-[460px]">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
@@ -660,7 +660,9 @@ function EntityCard({
           Add
         </button>
       </div>
-      {children}
+      <div className="admin-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
+        {children}
+      </div>
     </div>
   );
 }

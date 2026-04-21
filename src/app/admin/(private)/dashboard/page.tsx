@@ -38,16 +38,18 @@ export default async function AdminDashboardPage({
 
   return (
     <div className="space-y-10">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Offers Dashboard</h1>
-        <p className="mt-2 max-w-3xl text-sm text-slate-600">
-          Main focus is adding and monitoring offers from one place.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-slate-600">Search, filter, and manage all offers.</p>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Offers Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-600">Manage offers and related master data.</p>
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-2 self-end">
+          <Link
+            href="/admin/master-data?open=offer-type"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            Add Offer Type
+          </Link>
           <Link
             href="/admin/master-data?open=category"
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"

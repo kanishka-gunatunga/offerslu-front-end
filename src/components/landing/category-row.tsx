@@ -4,7 +4,7 @@ import type { Category } from "@/lib/site/types";
 
 export function CategoryRow({ categories }: { categories: Category[] }) {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-[88rem] px-4 py-14 sm:px-6 lg:px-8">
       <div className="text-center">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
           Browse by Category

@@ -24,7 +24,7 @@ export function PromotionCarousel({
 
   return (
     <section className="border-t border-slate-100 bg-slate-50/60 py-12">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">

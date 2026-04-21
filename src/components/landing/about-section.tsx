@@ -6,7 +6,7 @@ export function AboutSection({ about }: { about: AboutContent }) {
   const [a, b, c, d] = about.collageImageUrls;
   return (
     <section className="border-t border-slate-100 bg-white py-16">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-14 lg:px-8">
+      <div className="mx-auto grid max-w-[88rem] gap-10 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-14 lg:px-8">
         <div className="grid grid-cols-2 gap-3">
           {[a, b, c, d].map((src, i) => (
             <div
