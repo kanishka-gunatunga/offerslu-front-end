@@ -65,12 +65,7 @@ export function AddOfferForm({
   };
 
   return (
-    <form
-      id="add-offer"
-      action={createOfferAction}
-      encType="multipart/form-data"
-      className="space-y-5"
-    >
+    <form id="add-offer" action={createOfferAction} className="space-y-5">
       {initialValues ? <input type="hidden" name="offerId" value={initialValues.id} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2">

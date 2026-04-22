@@ -86,6 +86,7 @@ export const adminMockOffers: AdminOffer[] = [
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export function getOfferStatus(offer: AdminOffer, now = new Date()): OfferStatus {
+  if (offer.isInactive) return "inactive";
   const start = new Date(offer.startDate);
   const end = new Date(offer.endDate);
   if (now < start) return "upcoming";

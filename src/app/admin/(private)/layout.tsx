@@ -1,12 +1,14 @@
-import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 import {
   ADMIN_SESSION_COOKIE,
   verifyAdminSessionToken,
 } from "@/lib/auth/admin-session";
 import { AdminBrand } from "@/components/admin/admin-brand";
+import { AdminMobileSidebar } from "@/components/admin/admin-mobile-sidebar";
+import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
 
 import { adminLogoutAction } from "../_actions";
 
@@ -22,47 +24,31 @@ export default async function AdminPrivateLayout({
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-368 flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-10">
-            <AdminBrand />
-            <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium">
-              <Link href="/admin/dashboard" className="text-white/85 hover:text-white">
-                Dashboard
-              </Link>
-              <Link href="/admin/offers" className="text-white/85 hover:text-white">
-                Offers
-              </Link>
-              <Link href="/admin/master-data" className="text-white/85 hover:text-white">
-                Master data
-              </Link>
-              <Link
-                href="/admin/offers"
-                className="rounded-full bg-sky-500/90 px-3 py-1 text-white hover:bg-sky-500"
-              >
-                Add Offer
-              </Link>
-              <Link
-                href="/"
-                className="text-sky-300 hover:text-sky-200"
-                target="_blank"
-                rel="noreferrer"
-              >
-                View site
-              </Link>
-            </nav>
+      <aside className="hidden border-r border-slate-200 bg-white md:fixed md:inset-y-0 md:left-0 md:z-30 md:flex md:w-52 md:flex-col md:justify-between md:p-3">
+        <div>
+          <div className="inline-flex rounded-xl bg-black/70 p-2 backdrop-blur-sm">
+            <AdminBrand compact />
           </div>
-          <form action={adminLogoutAction}>
-            <button
-              type="submit"
-              className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/85 hover:bg-white/10 hover:text-white"
-            >
-              Sign out
-            </button>
-          </form>
+          <div className="mt-6">
+            <AdminSidebarNav />
+          </div>
         </div>
-      </header>
-      <div className="mx-auto max-w-368 px-4 py-24 sm:px-6">{children}</div>
+        <form action={adminLogoutAction}>
+          <button
+            type="submit"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </form>
+      </aside>
+
+      <div className="min-h-screen md:ml-52">
+        <AdminMobileSidebar logoutAction={adminLogoutAction} />
+
+        <main className="px-4 pb-8 pt-20 sm:px-6 md:px-8 md:pt-8">{children}</main>
+      </div>
     </div>
   );
 }

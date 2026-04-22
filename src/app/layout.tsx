@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Offerlu.lk",
-    template: "%s · Offerlu.lk",
+    default: "Offerslu.lk",
+    template: "%s · Offerslu.lk",
   },
   description:
     "Discover offers, bank promos, and seasonal deals across Sri Lanka.",

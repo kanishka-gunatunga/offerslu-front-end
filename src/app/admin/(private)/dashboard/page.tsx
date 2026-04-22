@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, Clock3, ListChecks, PlusCircle, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronDown, Clock3, ListChecks, PlusCircle, Search } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { ManageOffersTable } from "@/components/admin/manage-offers-table";
+import {
+  bankOptions,
+  categoryOptions,
+  locationOptions,
+  merchantOptions,
+  offerTypeOptions,
+} from "@/lib/admin/master-data";
 import { adminMockOffers, getOfferDashboardStats, getOfferStatus } from "@/lib/admin/mock-offers";
 
 const numberFormat = new Intl.NumberFormat("en-US");
@@ -12,8 +19,15 @@ export default async function AdminDashboardPage({
 }: {
   searchParams: Promise<{
     q?: string;
-    status?: "all" | "active" | "upcoming" | "expired";
+    status?: "all" | "active" | "upcoming" | "expired" | "inactive";
     category?: string;
+    offerType?: string;
+    merchant?: string;
+    bank?: string;
+    location?: string;
+    sort?: "startDesc" | "startAsc" | "endAsc" | "titleAsc" | "titleDesc";
+    page?: string;
+    pageSize?: string;
     deactivated?: string;
     error?: string;
   }>;
@@ -22,61 +36,116 @@ export default async function AdminDashboardPage({
   const q = (params.q ?? "").trim().toLowerCase();
   const status = params.status ?? "all";
   const category = params.category ?? "all";
+  const offerType = params.offerType ?? "all";
+  const merchant = params.merchant ?? "all";
+  const bank = params.bank ?? "all";
+  const location = params.location ?? "all";
+  const sort = params.sort ?? "startDesc";
+  const page = Math.max(1, Number(params.page ?? "1") || 1);
+  const pageSize = Math.min(50, Math.max(5, Number(params.pageSize ?? "10") || 10));
   const deactivated = params.deactivated === "1";
   const hasError = params.error === "1";
   const stats = getOfferDashboardStats(adminMockOffers);
-  const categories = Array.from(new Set(adminMockOffers.map((offer) => offer.category)));
-  const filteredOffers = adminMockOffers.filter((offer) => {
-    const matchesQ =
-      !q ||
-      offer.title.toLowerCase().includes(q) ||
-      offer.companyName.toLowerCase().includes(q);
-    const matchesStatus = status === "all" || getOfferStatus(offer) === status;
-    const matchesCategory = category === "all" || offer.category === category;
-    return matchesQ && matchesStatus && matchesCategory;
-  });
+
+  const categories = categoryOptions.flatMap((group) => [group, ...(group.children ?? [])]);
+  const offerTypes = offerTypeOptions.flatMap((group) => [group, ...(group.children ?? [])]);
+  const merchants = merchantOptions.flatMap((group) => [group, ...(group.children ?? [])]);
+
+  const filteredOffers = adminMockOffers
+    .filter((offer) => {
+      const matchesQ =
+        !q ||
+        offer.title.toLowerCase().includes(q) ||
+        offer.companyName.toLowerCase().includes(q) ||
+        offer.description.toLowerCase().includes(q);
+
+      const matchesStatus = status === "all" || getOfferStatus(offer) === status;
+      const matchesCategory = category === "all" || offer.categoryIds.includes(category);
+      const matchesOfferType = offerType === "all" || offer.offerTypeIds.includes(offerType);
+      const matchesMerchant = merchant === "all" || offer.merchantIds.includes(merchant);
+      const matchesBank = bank === "all" || offer.bankIds.includes(bank);
+      const matchesLocation = location === "all" || offer.locationIds.includes(location);
+
+      return (
+        matchesQ &&
+        matchesStatus &&
+        matchesCategory &&
+        matchesOfferType &&
+        matchesMerchant &&
+        matchesBank &&
+        matchesLocation
+      );
+    })
+    .sort((a, b) => {
+      if (sort === "titleAsc") return a.title.localeCompare(b.title);
+      if (sort === "titleDesc") return b.title.localeCompare(a.title);
+      if (sort === "startAsc") return Date.parse(a.startDate) - Date.parse(b.startDate);
+      if (sort === "endAsc") return Date.parse(a.endDate) - Date.parse(b.endDate);
+      return Date.parse(b.startDate) - Date.parse(a.startDate);
+    });
+  const totalPages = Math.max(1, Math.ceil(filteredOffers.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedOffers = filteredOffers.slice(startIndex, startIndex + pageSize);
+  const visibleStart = filteredOffers.length === 0 ? 0 : startIndex + 1;
+  const visibleEnd = Math.min(startIndex + pageSize, filteredOffers.length);
+
+  const getPageHref = (targetPage: number): string => {
+    const query = new URLSearchParams();
+    if (params.q) query.set("q", params.q);
+    if (status !== "all") query.set("status", status);
+    if (category !== "all") query.set("category", category);
+    if (offerType !== "all") query.set("offerType", offerType);
+    if (merchant !== "all") query.set("merchant", merchant);
+    if (bank !== "all") query.set("bank", bank);
+    if (location !== "all") query.set("location", location);
+    if (sort !== "startDesc") query.set("sort", sort);
+    query.set("pageSize", String(pageSize));
+    query.set("page", String(targetPage));
+    return `/admin/dashboard?${query.toString()}`;
+  };
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Offers Dashboard</h1>
-          <p className="mt-1 text-sm text-slate-600">Manage offers and related master data.</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Offers Dashboard</h1>
+          <p className="mt-1 text-xs text-slate-600 sm:text-sm">Manage offers and related master data.</p>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-2 self-end">
+        <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 lg:w-auto lg:grid-cols-none lg:grid-flow-col lg:auto-cols-max lg:justify-end lg:self-end">
           <Link
             href="/admin/master-data?open=offer-type"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
           >
             Add Offer Type
           </Link>
           <Link
             href="/admin/master-data?open=category"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
           >
             Add Category
           </Link>
           <Link
             href="/admin/master-data?open=merchant"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
           >
             Add Merchant
           </Link>
           <Link
             href="/admin/master-data?open=bank"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
           >
             Add Bank
           </Link>
           <Link
             href="/admin/master-data?open=location"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
           >
             Add Location
           </Link>
           <Link
             href="/admin/offers"
-            className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-700 sm:text-sm"
           >
             <PlusCircle className="h-4 w-4" />
             Add Offer
@@ -86,7 +155,7 @@ export default async function AdminDashboardPage({
       {deactivated ? (
         <p className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
           <CheckCircle2 className="h-4 w-4" />
-          Offer deactivated successfully.
+          Offer marked as inactive successfully.
         </p>
       ) : null}
       {hasError ? (
@@ -122,8 +191,8 @@ export default async function AdminDashboardPage({
       <section>
         <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold">Manage Offers</h2>
-            <form className="flex flex-wrap items-center gap-2" action="/admin/dashboard" method="get">
+            <h2 className="text-lg font-semibold sm:text-xl">Manage Offers</h2>
+            <form className="grid w-full gap-2 md:grid-cols-2 xl:grid-cols-4" action="/admin/dashboard" method="get">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
@@ -131,45 +200,143 @@ export default async function AdminDashboardPage({
                   name="q"
                   defaultValue={params.q ?? ""}
                   placeholder="Search by offer or company"
-                  className="w-64 rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none ring-sky-500/30 focus:border-sky-500 focus:ring-2"
+                  className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none ring-sky-500/30 focus:border-sky-500 focus:ring-2"
                 />
               </div>
-              <select
-                name="status"
-                defaultValue={status}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-sky-500/30 focus:border-sky-500 focus:ring-2"
-              >
+
+              <SelectField name="status" defaultValue={status}>
                 <option value="all">All status</option>
                 <option value="active">Active</option>
                 <option value="upcoming">Upcoming</option>
                 <option value="expired">Expired</option>
-              </select>
-              <select
-                name="category"
-                defaultValue={category}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-sky-500/30 focus:border-sky-500 focus:ring-2"
-              >
+                <option value="inactive">Inactive</option>
+              </SelectField>
+
+              <SelectField name="sort" defaultValue={sort}>
+                <option value="startDesc">Newest start date</option>
+                <option value="startAsc">Oldest start date</option>
+                <option value="endAsc">Ending soon</option>
+                <option value="titleAsc">Title A-Z</option>
+                <option value="titleDesc">Title Z-A</option>
+              </SelectField>
+
+              <SelectField name="category" defaultValue={category}>
                 <option value="all">All categories</option>
                 {categories.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
+                  <option key={item.id} value={item.id}>
+                    {item.name}
                   </option>
                 ))}
-              </select>
+              </SelectField>
+
+              <SelectField name="offerType" defaultValue={offerType}>
+                <option value="all">All offer types</option>
+                {offerTypes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </SelectField>
+
+              <SelectField name="merchant" defaultValue={merchant}>
+                <option value="all">All merchants</option>
+                {merchants.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </SelectField>
+
+              <SelectField name="bank" defaultValue={bank}>
+                <option value="all">All banks</option>
+                {bankOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </SelectField>
+
+              <SelectField name="location" defaultValue={location}>
+                <option value="all">All locations</option>
+                {locationOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </SelectField>
+
+              <SelectField name="pageSize" defaultValue={String(pageSize)}>
+                <option value="10">10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+              </SelectField>
+
               <button
                 type="submit"
                 className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
               >
-                Apply
+                Apply filters
               </button>
             </form>
           </div>
           <p className="mb-4 text-sm text-slate-600">
-            Showing {filteredOffers.length} of {adminMockOffers.length} offers.
+            Showing {visibleStart}-{visibleEnd} of {filteredOffers.length} filtered offers ({adminMockOffers.length} total).
           </p>
-          <ManageOffersTable offers={filteredOffers} />
+          <ManageOffersTable offers={paginatedOffers} />
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-600">
+              Page {currentPage} of {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <Link
+                href={getPageHref(Math.max(1, currentPage - 1))}
+                aria-disabled={currentPage <= 1}
+                className={`rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+                  currentPage <= 1
+                    ? "pointer-events-none border-slate-200 text-slate-400"
+                    : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                Previous
+              </Link>
+              <Link
+                href={getPageHref(Math.min(totalPages, currentPage + 1))}
+                aria-disabled={currentPage >= totalPages}
+                className={`rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+                  currentPage >= totalPages
+                    ? "pointer-events-none border-slate-200 text-slate-400"
+                    : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                Next
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function SelectField({
+  name,
+  defaultValue,
+  children,
+}: {
+  name: string;
+  defaultValue: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="relative">
+      <select
+        name={name}
+        defaultValue={defaultValue}
+        className="w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm outline-none ring-sky-500/30 focus:border-sky-500 focus:ring-2"
+      >
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
     </div>
   );
 }
@@ -186,10 +353,10 @@ function StatCard({
   return (
     <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-600">{label}</p>
+        <p className="text-xs font-medium text-slate-600 sm:text-sm">{label}</p>
         <span className="text-sky-700">{icon}</span>
       </div>
-      <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{value}</p>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{value}</p>
     </div>
   );
 }

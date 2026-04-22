@@ -1,4 +1,4 @@
-export type OfferStatus = "active" | "expired" | "upcoming";
+export type OfferStatus = "active" | "expired" | "upcoming" | "inactive";
 
 export interface AdminOffer {
   id: string;
@@ -17,6 +17,7 @@ export interface AdminOffer {
   paymentIds: string[];
   bankIds: string[];
   locationIds: string[];
+  isInactive?: boolean;
 }
 
 export interface OfferDashboardStats {
