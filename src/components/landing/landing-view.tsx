@@ -1,7 +1,6 @@
 import { resolvePromotionIds } from "@/lib/site/promotions";
 import type { SiteContent } from "@/lib/site/types";
 
-import { AboutSection } from "./about-section";
 import { BanksSection } from "./banks-section";
 import { CategoryRow } from "./category-row";
 import { HeroSection } from "./hero-section";
@@ -13,10 +12,10 @@ import { WatermarkBg } from "./watermark-bg";
 
 export function LandingView({ content }: { content: SiteContent }) {
   return (
-    <div className="relative flex min-h-full flex-1 flex-col bg-white text-slate-900">
-      <WatermarkBg />
+    <div className="relative flex min-h-full flex-1 flex-col bg-[#fbfcff] text-slate-900">
       <SiteHeader siteName={content.siteName} />
-      <main className="flex-1 pt-16">
+      <WatermarkBg />
+      <main className="flex-1">
         <HeroSection hero={content.hero} />
         <CategoryRow categories={content.categories} />
         {content.promotionSections.map((section) => (
@@ -28,7 +27,6 @@ export function LandingView({ content }: { content: SiteContent }) {
           />
         ))}
         <BanksSection banks={content.banks} />
-        <AboutSection about={content.about} />
         <SocialSection links={content.socialLinks} />
       </main>
       <LandingFooter siteName={content.siteName} />

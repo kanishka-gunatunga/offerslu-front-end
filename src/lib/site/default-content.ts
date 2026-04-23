@@ -4,11 +4,11 @@ const u = (photoId: string, w = 800, h = 500) =>
   `https://images.unsplash.com/${photoId}?auto=format&fit=crop&w=${w}&h=${h}&q=80`;
 
 export const defaultSiteContent: SiteContent = {
-  siteName: "Offerlu.lk",
+  siteName: "Offerslu.lk",
   hero: {
     title: "Fashion Week Sale",
     subtitle: "Biggest Discounts of the Season",
-    backgroundImageUrl: u("photo-1441986300917-64674bd600d8", 2000, 1200),
+    backgroundImageUrl: "/hero-bg.png",
     searchPlaceholder: "Search offers, brands, categories...",
   },
   categories: [

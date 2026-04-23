@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   },
   description:
     "Discover offers, bank promos, and seasonal deals across Sri Lanka.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

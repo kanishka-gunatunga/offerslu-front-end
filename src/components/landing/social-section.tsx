@@ -55,30 +55,32 @@ function SocialGlyph({ icon }: { icon: SocialLink["icon"] }) {
 
 export function SocialSection({ links }: { links: SocialLink[] }) {
   return (
-    <section className="border-t border-slate-100 bg-slate-50/60 py-14">
-      <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
+    <section className="py-8 sm:py-10">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             Connect with us
           </h2>
-          <p className="mt-2 text-slate-600">Follow updates and new drops.</p>
+          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            Follow updates and new drops.
+          </p>
         </div>
-        <div className="mt-10 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {links.map((l) => (
             <a
               key={l.id}
               href={l.url}
-              className="flex flex-col items-center gap-3 rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-md"
+              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
               rel="noopener noreferrer"
               target="_blank"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-500 text-white shadow-sm shadow-sky-500/25">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sky-700">
                 <SocialGlyph icon={l.icon} />
               </span>
-              <span className="text-sm font-semibold text-slate-900">
-                {l.platform}
+              <span className="flex flex-col">
+                <span className="text-xs font-semibold text-slate-900">{l.platform}</span>
+                <span className="text-[11px] text-slate-500">Follow us</span>
               </span>
-              <span className="text-xs font-medium text-sky-700">Follow us</span>
             </a>
           ))}
         </div>
