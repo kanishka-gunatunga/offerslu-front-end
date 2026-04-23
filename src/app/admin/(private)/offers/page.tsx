@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, FilePenLine, PlusCircle } from "lucide-react";
+import { FilePenLine, PlusCircle } from "lucide-react";
 
+import { AdminPageToasts } from "@/components/admin/admin-page-toasts";
 import { AddOfferForm } from "@/components/admin/add-offer-form";
-import { adminMockOffers } from "@/lib/admin/mock-offers";
+import { toFlatOptions, toHierarchyOptions } from "@/lib/admin/master-data-mappers";
+import { getAdminOfferByIdServer, getAllMasterDataServer } from "@/lib/api/backend";
 
 export default async function AdminOffersPage({
   searchParams,
@@ -21,7 +23,10 @@ export default async function AdminOffersPage({
   const hasError = params.error === "1";
   const deactivated = params.deactivated === "1";
   const editId = params.edit ?? "";
-  const selectedOffer = adminMockOffers.find((offer) => offer.id === editId);
+  const [selectedOffer, masterData] = await Promise.all([
+    getAdminOfferByIdServer(editId),
+    getAllMasterDataServer(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -39,31 +44,18 @@ export default async function AdminOffersPage({
           Back to dashboard
         </Link>
       </div>
-
-      {created ? (
-        <p className="inline-flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">
-          <CheckCircle2 className="h-4 w-4" />
-          Offer saved successfully.
-        </p>
-      ) : null}
-      {updated ? (
-        <p className="inline-flex items-center gap-2 rounded-xl bg-sky-50 px-4 py-3 text-sm font-medium text-sky-800 ring-1 ring-sky-200">
-          <CheckCircle2 className="h-4 w-4" />
-          Offer updated successfully.
-        </p>
-      ) : null}
-      {hasError ? (
-        <p className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800 ring-1 ring-red-200">
-          <AlertCircle className="h-4 w-4" />
-          Missing required fields. Please complete and try again.
-        </p>
-      ) : null}
-      {deactivated ? (
-        <p className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
-          <CheckCircle2 className="h-4 w-4" />
-          Offer deactivated successfully.
-        </p>
-      ) : null}
+      <AdminPageToasts
+        toasts={[
+          { show: created, type: "success", message: "Offer saved successfully." },
+          { show: updated, type: "success", message: "Offer updated successfully." },
+          {
+            show: hasError,
+            type: "error",
+            message: "Missing required fields. Please provide title, dates, description, and banner image.",
+          },
+          { show: deactivated, type: "success", message: "Offer marked as inactive successfully." },
+        ]}
+      />
 
       <section className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -92,7 +84,15 @@ export default async function AdminOffersPage({
           </div>
         </div>
         <AddOfferForm
-          initialValues={selectedOffer}
+          initialValues={selectedOffer ?? undefined}
+          options={{
+            offerTypeOptions: toHierarchyOptions(masterData.offerTypes),
+            categoryOptions: toHierarchyOptions(masterData.categories),
+            merchantOptions: toHierarchyOptions(masterData.merchants),
+            paymentOptions: toHierarchyOptions(masterData.payments),
+            bankOptions: toFlatOptions(masterData.banks),
+            locationOptions: toFlatOptions(masterData.locations),
+          }}
           submitLabel={selectedOffer ? "Save changes" : "Add offer"}
         />
       </section>

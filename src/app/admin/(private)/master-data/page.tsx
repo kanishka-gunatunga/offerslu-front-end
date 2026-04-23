@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MasterDataManager } from "@/components/admin/master-data-manager";
+import { getAllMasterDataServer } from "@/lib/api/backend";
 
 export default async function AdminMasterDataPage({
   searchParams,
@@ -10,6 +11,7 @@ export default async function AdminMasterDataPage({
   }>;
 }) {
   const params = await searchParams;
+  const masterData = await getAllMasterDataServer();
 
   return (
     <div className="space-y-8">
@@ -28,7 +30,7 @@ export default async function AdminMasterDataPage({
         </Link>
       </div>
 
-      <MasterDataManager open={params.open} />
+      <MasterDataManager open={params.open} initialData={masterData} />
     </div>
   );
 }

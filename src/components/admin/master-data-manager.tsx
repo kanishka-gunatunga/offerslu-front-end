@@ -3,6 +3,9 @@
 import { type ReactNode, useMemo, useState } from "react";
 import { Edit3, PlusCircle, Trash2, X } from "lucide-react";
 
+import { useToast } from "@/components/ui/toast-provider";
+import { clientApiFetch } from "@/lib/api/client";
+import type { MasterDataRecord } from "@/lib/api/backend";
 import {
   bankOptions,
   categoryOptions,
@@ -185,35 +188,79 @@ function createLocationSeed(): LocationRecord[] {
   }));
 }
 
-function fileToObjectUrl(file: File | null): string | null {
-  if (!file || file.size === 0) return null;
-  return URL.createObjectURL(file);
-}
-
-function newId(prefix: string): string {
-  return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
-}
-
 function statusPill(status: Status) {
   return status === "active"
     ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
     : "bg-slate-100 text-slate-600 ring-slate-200";
 }
 
-export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
+export function MasterDataManager({
+  open,
+  initialData,
+}: {
+  open?: MasterDataOpenKey;
+  initialData?: {
+    offerTypes: MasterDataRecord[];
+    categories: MasterDataRecord[];
+    merchants: MasterDataRecord[];
+    payments: MasterDataRecord[];
+    banks: MasterDataRecord[];
+    locations: MasterDataRecord[];
+  };
+}) {
+  const toCategoryRecord = (item: MasterDataRecord): CategoryRecord => ({
+    id: item.id,
+    name: item.name,
+    parentId: item.parentId,
+    bannerImageUrl: item.bannerImageUrl ?? "",
+    status: item.status,
+  });
+  const toMerchantRecord = (item: MasterDataRecord): MerchantRecord => ({
+    id: item.id,
+    name: item.name,
+    parentId: item.parentId,
+    logoUrl: item.logoUrl ?? "",
+    status: item.status,
+  });
+  const toBankRecord = (item: MasterDataRecord): BankRecord => ({
+    id: item.id,
+    name: item.name,
+    logoUrl: item.logoUrl ?? "",
+    status: item.status,
+  });
+  const toLocationRecord = (item: MasterDataRecord): LocationRecord => ({
+    id: item.id,
+    name: item.name,
+    status: item.status,
+  });
+  const toHierarchyRecord = (item: MasterDataRecord): HierarchyRecord => ({
+    id: item.id,
+    name: item.name,
+    parentId: item.parentId,
+    status: item.status,
+  });
+
   const [offerTypes, setOfferTypes] = useState<HierarchyRecord[]>(() =>
-    createHierarchySeed(offerTypeOptions),
+    initialData?.offerTypes.map(toHierarchyRecord) ?? createHierarchySeed(offerTypeOptions),
   );
-  const [categories, setCategories] = useState<CategoryRecord[]>(createCategorySeed);
-  const [merchants, setMerchants] = useState<MerchantRecord[]>(createMerchantSeed);
+  const [categories, setCategories] = useState<CategoryRecord[]>(
+    () => initialData?.categories.map(toCategoryRecord) ?? createCategorySeed(),
+  );
+  const [merchants, setMerchants] = useState<MerchantRecord[]>(
+    () => initialData?.merchants.map(toMerchantRecord) ?? createMerchantSeed(),
+  );
   const [payments, setPayments] = useState<HierarchyRecord[]>(() =>
-    createHierarchySeed(paymentOptions),
+    initialData?.payments.map(toHierarchyRecord) ?? createHierarchySeed(paymentOptions),
   );
-  const [banks, setBanks] = useState<BankRecord[]>(createBankSeed);
-  const [locations, setLocations] = useState<LocationRecord[]>(createLocationSeed);
+  const [banks, setBanks] = useState<BankRecord[]>(
+    () => initialData?.banks.map(toBankRecord) ?? createBankSeed(),
+  );
+  const [locations, setLocations] = useState<LocationRecord[]>(
+    () => initialData?.locations.map(toLocationRecord) ?? createLocationSeed(),
+  );
   const [modal, setModal] = useState<ModalState>(() => initialModalFrom(open));
   const [deleteTarget, setDeleteTarget] = useState<DeleteState>(null);
-  const [message, setMessage] = useState<string>("");
+  const { showToast } = useToast();
 
   const offerTypeParents = useMemo(
     () => offerTypes.filter((item) => !item.parentId && item.status === "active"),
@@ -255,185 +302,239 @@ export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
       ? locations.find((item) => item.id === modal.id) ?? null
       : null;
 
-  const saveCategory = (formData: FormData, editingId?: string) => {
+  const saveCategory = async (formData: FormData, editingId?: string) => {
     const name = String(formData.get("name") ?? "").trim();
-    const parentIdRaw = String(formData.get("parentId") ?? "").trim();
-    const parentId = parentIdRaw || null;
     const bannerFile = formData.get("bannerImage") as File | null;
     if (!name) return;
+    if (formData.get("parentId")) {
+      const parentValue = String(formData.get("parentId") ?? "").trim();
+      if (parentValue) formData.set("parentId", parentValue);
+      else formData.delete("parentId");
+    }
+    if (bannerFile instanceof File && bannerFile.size > 0) {
+      formData.set("bannerImageFile", bannerFile);
+    }
+    formData.delete("bannerImage");
 
-    setCategories((prev) => {
-      if (editingId) {
-        const existing = prev.find((item) => item.id === editingId);
-        if (!existing) return prev;
-        const bannerImageUrl = fileToObjectUrl(bannerFile) ?? existing.bannerImageUrl;
-        return prev.map((item) =>
-          item.id === editingId
-            ? { ...item, name, parentId, bannerImageUrl }
-            : item,
-        );
-      }
-      const bannerImageUrl =
-        fileToObjectUrl(bannerFile) ??
-        "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&h=500&q=80";
-      return [
-        ...prev,
-        {
-          id: newId("cat"),
+    const response = await clientApiFetch(
+      editingId ? `/admin/master-data/categories/${editingId}` : "/admin/master-data/categories",
+      {
+        method: editingId ? "PATCH" : "POST",
+        body: formData,
+      },
+    );
+    if (!response.ok) {
+      showToast("Failed to save category.", "error");
+      return;
+    }
+    const data = (await response.json()) as MasterDataRecord;
+    const record = toCategoryRecord(data);
+    setCategories((prev) =>
+      editingId ? prev.map((item) => (item.id === record.id ? record : item)) : [...prev, record],
+    );
+
+    setModal(null);
+    showToast(editingId ? "Category updated." : "Category added.", "success");
+  };
+
+  const saveOfferType = async (formData: FormData, editingId?: string) => {
+    const name = String(formData.get("name") ?? "").trim();
+    if (!name) return;
+    const response = await clientApiFetch(
+      editingId ? `/admin/master-data/offer-types/${editingId}` : "/admin/master-data/offer-types",
+      {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
           name,
-          parentId,
-          bannerImageUrl,
-          status: "active",
-        },
-      ];
-    });
-
+          parentId: String(formData.get("parentId") ?? "").trim() || null,
+        }),
+      },
+    );
+    if (!response.ok) {
+      showToast("Failed to save offer type.", "error");
+      return;
+    }
+    const data = (await response.json()) as MasterDataRecord;
+    const record = toHierarchyRecord(data);
+    setOfferTypes((prev) =>
+      editingId ? prev.map((item) => (item.id === record.id ? record : item)) : [...prev, record],
+    );
     setModal(null);
-    setMessage(editingId ? "Category updated." : "Category added.");
+    showToast(editingId ? "Offer type updated." : "Offer type added.", "success");
   };
 
-  const saveOfferType = (formData: FormData, editingId?: string) => {
-    const name = String(formData.get("name") ?? "").trim();
-    const parentIdRaw = String(formData.get("parentId") ?? "").trim();
-    const parentId = parentIdRaw || null;
-    if (!name) return;
-
-    setOfferTypes((prev) => {
-      if (editingId) {
-        return prev.map((item) =>
-          item.id === editingId ? { ...item, name, parentId } : item,
-        );
-      }
-      return [...prev, { id: newId("ot"), name, parentId, status: "active" }];
-    });
-    setModal(null);
-    setMessage(editingId ? "Offer type updated." : "Offer type added.");
-  };
-
-  const saveMerchant = (formData: FormData, editingId?: string) => {
-    const name = String(formData.get("name") ?? "").trim();
-    const parentIdRaw = String(formData.get("parentId") ?? "").trim();
-    const parentId = parentIdRaw || null;
-    const logoFile = formData.get("logoImage") as File | null;
-    if (!name) return;
-
-    setMerchants((prev) => {
-      if (editingId) {
-        const existing = prev.find((item) => item.id === editingId);
-        if (!existing) return prev;
-        const logoUrl = fileToObjectUrl(logoFile) ?? existing.logoUrl;
-        return prev.map((item) => (item.id === editingId ? { ...item, name, parentId, logoUrl } : item));
-      }
-      const logoUrl =
-        fileToObjectUrl(logoFile) ??
-        "https://ui-avatars.com/api/?name=MER&background=e2e8f0&color=0f172a&size=128&rounded=true";
-      return [
-        ...prev,
-        { id: newId("mer"), name, parentId, logoUrl, status: "active" },
-      ];
-    });
-
-    setModal(null);
-    setMessage(editingId ? "Merchant updated." : "Merchant added.");
-  };
-
-  const savePayment = (formData: FormData, editingId?: string) => {
-    const name = String(formData.get("name") ?? "").trim();
-    const parentIdRaw = String(formData.get("parentId") ?? "").trim();
-    const parentId = parentIdRaw || null;
-    if (!name) return;
-
-    setPayments((prev) => {
-      if (editingId) {
-        return prev.map((item) =>
-          item.id === editingId ? { ...item, name, parentId } : item,
-        );
-      }
-      return [...prev, { id: newId("pay"), name, parentId, status: "active" }];
-    });
-    setModal(null);
-    setMessage(editingId ? "Payment updated." : "Payment added.");
-  };
-
-  const saveBank = (formData: FormData, editingId?: string) => {
+  const saveMerchant = async (formData: FormData, editingId?: string) => {
     const name = String(formData.get("name") ?? "").trim();
     const logoFile = formData.get("logoImage") as File | null;
     if (!name) return;
+    if (formData.get("parentId")) {
+      const parentValue = String(formData.get("parentId") ?? "").trim();
+      if (parentValue) formData.set("parentId", parentValue);
+      else formData.delete("parentId");
+    }
+    if (logoFile instanceof File && logoFile.size > 0) {
+      formData.set("logoImageFile", logoFile);
+    }
+    formData.delete("logoImage");
 
-    setBanks((prev) => {
-      if (editingId) {
-        const existing = prev.find((item) => item.id === editingId);
-        if (!existing) return prev;
-        const logoUrl = fileToObjectUrl(logoFile) ?? existing.logoUrl;
-        return prev.map((item) => (item.id === editingId ? { ...item, name, logoUrl } : item));
-      }
-      const logoUrl =
-        fileToObjectUrl(logoFile) ??
-        "https://ui-avatars.com/api/?name=BANK&background=e2e8f0&color=0f172a&size=128&rounded=true";
-      return [...prev, { id: newId("bank"), name, logoUrl, status: "active" }];
-    });
+    const response = await clientApiFetch(
+      editingId ? `/admin/master-data/merchants/${editingId}` : "/admin/master-data/merchants",
+      {
+        method: editingId ? "PATCH" : "POST",
+        body: formData,
+      },
+    );
+    if (!response.ok) {
+      showToast("Failed to save merchant.", "error");
+      return;
+    }
+    const data = (await response.json()) as MasterDataRecord;
+    const record = toMerchantRecord(data);
+    setMerchants((prev) =>
+      editingId ? prev.map((item) => (item.id === record.id ? record : item)) : [...prev, record],
+    );
 
     setModal(null);
-    setMessage(editingId ? "Bank updated." : "Bank added.");
+    showToast(editingId ? "Merchant updated." : "Merchant added.", "success");
   };
 
-  const saveLocation = (formData: FormData, editingId?: string) => {
+  const savePayment = async (formData: FormData, editingId?: string) => {
     const name = String(formData.get("name") ?? "").trim();
     if (!name) return;
-    setLocations((prev) => {
-      if (editingId) {
-        return prev.map((item) => (item.id === editingId ? { ...item, name } : item));
-      }
-      return [...prev, { id: newId("loc"), name, status: "active" }];
-    });
+    const response = await clientApiFetch(
+      editingId ? `/admin/master-data/payments/${editingId}` : "/admin/master-data/payments",
+      {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name,
+          parentId: String(formData.get("parentId") ?? "").trim() || null,
+        }),
+      },
+    );
+    if (!response.ok) {
+      showToast("Failed to save payment.", "error");
+      return;
+    }
+    const data = (await response.json()) as MasterDataRecord;
+    const record = toHierarchyRecord(data);
+    setPayments((prev) =>
+      editingId ? prev.map((item) => (item.id === record.id ? record : item)) : [...prev, record],
+    );
     setModal(null);
-    setMessage(editingId ? "Location updated." : "Location added.");
+    showToast(editingId ? "Payment updated." : "Payment added.", "success");
   };
 
-  const softDelete = () => {
+  const saveBank = async (formData: FormData, editingId?: string) => {
+    const name = String(formData.get("name") ?? "").trim();
+    const logoFile = formData.get("logoImage") as File | null;
+    if (!name) return;
+    if (logoFile instanceof File && logoFile.size > 0) {
+      formData.set("logoImageFile", logoFile);
+    }
+    formData.delete("logoImage");
+
+    const response = await clientApiFetch(
+      editingId ? `/admin/master-data/banks/${editingId}` : "/admin/master-data/banks",
+      {
+        method: editingId ? "PATCH" : "POST",
+        body: formData,
+      },
+    );
+    if (!response.ok) {
+      showToast("Failed to save bank.", "error");
+      return;
+    }
+    const data = (await response.json()) as MasterDataRecord;
+    const record = toBankRecord(data);
+    setBanks((prev) =>
+      editingId ? prev.map((item) => (item.id === record.id ? record : item)) : [...prev, record],
+    );
+
+    setModal(null);
+    showToast(editingId ? "Bank updated." : "Bank added.", "success");
+  };
+
+  const saveLocation = async (formData: FormData, editingId?: string) => {
+    const name = String(formData.get("name") ?? "").trim();
+    if (!name) return;
+    const response = await clientApiFetch(
+      editingId ? `/admin/master-data/locations/${editingId}` : "/admin/master-data/locations",
+      {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name }),
+      },
+    );
+    if (!response.ok) {
+      showToast("Failed to save location.", "error");
+      return;
+    }
+    const data = (await response.json()) as MasterDataRecord;
+    const record = toLocationRecord(data);
+    setLocations((prev) =>
+      editingId ? prev.map((item) => (item.id === record.id ? record : item)) : [...prev, record],
+    );
+    setModal(null);
+    showToast(editingId ? "Location updated." : "Location added.", "success");
+  };
+
+  const softDelete = async () => {
     if (!deleteTarget) return;
+    const entityPathByKind: Record<Exclude<DeleteState, null>["kind"], string> = {
+      "offer-type": "offer-types",
+      category: "categories",
+      merchant: "merchants",
+      payment: "payments",
+      bank: "banks",
+      location: "locations",
+    };
+    const response = await clientApiFetch(
+      `/admin/master-data/${entityPathByKind[deleteTarget.kind]}/${deleteTarget.id}`,
+      { method: "DELETE" },
+    );
+    if (!response.ok) {
+      showToast("Failed to delete item.", "error");
+      return;
+    }
+
     if (deleteTarget.kind === "offer-type") {
       setOfferTypes((prev) =>
         prev.map((item) => (item.id === deleteTarget.id ? { ...item, status: "inactive" } : item)),
       );
-      setMessage("Offer type marked as inactive.");
+      showToast("Offer type marked as inactive.", "success");
     } else if (deleteTarget.kind === "category") {
       setCategories((prev) =>
         prev.map((item) => (item.id === deleteTarget.id ? { ...item, status: "inactive" } : item)),
       );
-      setMessage("Category marked as inactive.");
+      showToast("Category marked as inactive.", "success");
     } else if (deleteTarget.kind === "merchant") {
       setMerchants((prev) =>
         prev.map((item) => (item.id === deleteTarget.id ? { ...item, status: "inactive" } : item)),
       );
-      setMessage("Merchant marked as inactive.");
+      showToast("Merchant marked as inactive.", "success");
     } else if (deleteTarget.kind === "payment") {
       setPayments((prev) =>
         prev.map((item) => (item.id === deleteTarget.id ? { ...item, status: "inactive" } : item)),
       );
-      setMessage("Payment marked as inactive.");
+      showToast("Payment marked as inactive.", "success");
     } else if (deleteTarget.kind === "bank") {
       setBanks((prev) =>
         prev.map((item) => (item.id === deleteTarget.id ? { ...item, status: "inactive" } : item)),
       );
-      setMessage("Bank marked as inactive.");
+      showToast("Bank marked as inactive.", "success");
     } else {
       setLocations((prev) =>
         prev.map((item) => (item.id === deleteTarget.id ? { ...item, status: "inactive" } : item)),
       );
-      setMessage("Location marked as inactive.");
+      showToast("Location marked as inactive.", "success");
     }
     setDeleteTarget(null);
   };
 
   return (
     <div className="space-y-8">
-      {message ? (
-        <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 ring-1 ring-emerald-200">
-          {message}
-        </p>
-      ) : null}
-
       <section className="grid gap-6 lg:grid-cols-2">
         <EntityCard
           title="Offer Type"
@@ -442,7 +543,7 @@ export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
         >
           <EntityTable
             columns={["Name", "Parent", "Status", "Actions"]}
-            rows={offerTypes.map((item) => [
+            rows={offerTypes.filter((item) => item.status === "active").map((item) => [
               item.name,
               item.parentId ? offerTypes.find((p) => p.id === item.parentId)?.name ?? "-" : "Level 1",
               <StatusBadge key={`${item.id}-status`} status={item.status} />,
@@ -462,7 +563,7 @@ export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
         >
           <EntityTable
             columns={["Name", "Parent", "Status", "Actions"]}
-            rows={categories.map((item) => [
+            rows={categories.filter((item) => item.status === "active").map((item) => [
               item.name,
               item.parentId ? categories.find((p) => p.id === item.parentId)?.name ?? "-" : "Level 1",
               <StatusBadge key={`${item.id}-status`} status={item.status} />,
@@ -482,7 +583,7 @@ export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
         >
           <EntityTable
             columns={["Name", "Parent", "Status", "Actions"]}
-            rows={merchants.map((item) => [
+            rows={merchants.filter((item) => item.status === "active").map((item) => [
               item.name,
               item.parentId ? merchants.find((p) => p.id === item.parentId)?.name ?? "-" : "Level 1",
               <StatusBadge key={`${item.id}-status`} status={item.status} />,
@@ -502,7 +603,7 @@ export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
         >
           <EntityTable
             columns={["Name", "Parent", "Status", "Actions"]}
-            rows={payments.map((item) => [
+            rows={payments.filter((item) => item.status === "active").map((item) => [
               item.name,
               item.parentId ? payments.find((p) => p.id === item.parentId)?.name ?? "-" : "Level 1",
               <StatusBadge key={`${item.id}-status`} status={item.status} />,
@@ -522,7 +623,7 @@ export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
         >
           <EntityTable
             columns={["Name", "Status", "Actions"]}
-            rows={banks.map((item) => [
+            rows={banks.filter((item) => item.status === "active").map((item) => [
               item.name,
               <StatusBadge key={`${item.id}-status`} status={item.status} />,
               <RowActions
@@ -541,7 +642,7 @@ export function MasterDataManager({ open }: { open?: MasterDataOpenKey }) {
         >
           <EntityTable
             columns={["Name", "Status", "Actions"]}
-            rows={locations.map((item) => [
+            rows={locations.filter((item) => item.status === "active").map((item) => [
               item.name,
               <StatusBadge key={`${item.id}-status`} status={item.status} />,
               <RowActions

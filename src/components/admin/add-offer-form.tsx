@@ -6,50 +6,62 @@ import { Plus } from "lucide-react";
 
 import { createOfferAction } from "@/app/admin/_actions";
 import {
-  bankOptions,
-  categoryOptions,
-  locationOptions,
-  merchantOptions,
-  offerTypeOptions,
-  paymentOptions,
+  type FlatOption,
   type HierarchyOption,
 } from "@/lib/admin/master-data";
 import type { AdminOffer } from "@/lib/admin/types";
 
 export function AddOfferForm({
   initialValues,
+  options,
   submitLabel = "Add offer",
 }: {
   initialValues?: AdminOffer;
+  options: {
+    offerTypeOptions: HierarchyOption[];
+    categoryOptions: HierarchyOption[];
+    merchantOptions: HierarchyOption[];
+    paymentOptions: HierarchyOption[];
+    bankOptions: FlatOption[];
+    locationOptions: FlatOption[];
+  };
   submitLabel?: string;
 }) {
+  const {
+    offerTypeOptions,
+    categoryOptions,
+    merchantOptions,
+    paymentOptions,
+    bankOptions,
+    locationOptions,
+  } = options;
   const initialCategoryParents = useMemo(
     () =>
       categoryOptions
         .filter((group) => initialValues?.categoryIds.includes(group.id))
         .map((group) => group.id),
-    [initialValues],
+    [categoryOptions, initialValues],
   );
   const initialMerchantParents = useMemo(
     () =>
       merchantOptions
         .filter((group) => initialValues?.merchantIds.includes(group.id))
         .map((group) => group.id),
-    [initialValues],
+    [merchantOptions, initialValues],
   );
   const initialPaymentParents = useMemo(
     () =>
       paymentOptions
         .filter((group) => initialValues?.paymentIds.includes(group.id))
         .map((group) => group.id),
-    [initialValues],
+    [paymentOptions, initialValues],
   );
   const initialOfferTypeParents = useMemo(
     () =>
       offerTypeOptions
         .filter((group) => initialValues?.offerTypeIds.includes(group.id))
         .map((group) => group.id),
-    [initialValues],
+    [offerTypeOptions, initialValues],
   );
 
   const [categoryParents, setCategoryParents] = useState<string[]>(initialCategoryParents);
@@ -112,7 +124,7 @@ export function AddOfferForm({
       </div>
 
       <HierarchyCheckboxGroup
-        legend="Offer Type"
+        legend="Offer Type (Optional)"
         description=""
         name="offerTypeIds"
         groups={offerTypeOptions}
@@ -123,7 +135,7 @@ export function AddOfferForm({
       />
 
       <HierarchyCheckboxGroup
-        legend="Category"
+        legend="Category (Optional)"
         description=""
         name="categoryIds"
         groups={categoryOptions}
@@ -134,7 +146,7 @@ export function AddOfferForm({
       />
 
       <HierarchyCheckboxGroup
-        legend="Merchant"
+        legend="Merchant (Optional)"
         description=""
         name="merchantIds"
         groups={merchantOptions}
@@ -145,7 +157,7 @@ export function AddOfferForm({
       />
 
       <HierarchyCheckboxGroup
-        legend="Payment"
+        legend="Payment (Optional)"
         description=""
         name="paymentIds"
         groups={paymentOptions}
@@ -156,7 +168,7 @@ export function AddOfferForm({
       />
 
       <CheckboxGroup
-        legend="Bank"
+        legend="Bank (Optional)"
         description=""
         name="bankIds"
         options={bankOptions.map((item) => ({ id: item.id, label: item.name }))}
@@ -165,7 +177,7 @@ export function AddOfferForm({
       />
 
       <CheckboxGroup
-        legend="Location"
+        legend="Location (Optional)"
         description=""
         name="locationIds"
         options={locationOptions.map((item) => ({ id: item.id, label: item.name }))}

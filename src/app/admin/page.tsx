@@ -1,11 +1,9 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin-session";
+import { checkAdminSessionServer } from "@/lib/api/backend";
 
 export default async function AdminIndexPage() {
-  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
-  if (verifyAdminSessionToken(token)) {
+  if (await checkAdminSessionServer()) {
     redirect("/admin/dashboard");
   }
   redirect("/admin/login");

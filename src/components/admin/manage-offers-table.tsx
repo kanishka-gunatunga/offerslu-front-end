@@ -3,17 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, Eye, PencilLine, Trash2, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { deactivateOfferAction } from "@/app/admin/_actions";
-import {
-  bankOptions,
-  categoryOptions,
-  locationOptions,
-  merchantOptions,
-  offerTypeOptions,
-  paymentOptions,
-} from "@/lib/admin/master-data";
+import { getClientBackendOrigin } from "@/lib/api/client";
 import { getOfferStatus } from "@/lib/admin/mock-offers";
 import type { AdminOffer } from "@/lib/admin/types";
 
@@ -30,36 +23,26 @@ function statusClasses(status: ReturnType<typeof getOfferStatus>) {
   return "bg-slate-100 text-slate-600 ring-slate-200";
 }
 
-function flattenHierarchyOptions(
-  items: typeof categoryOptions | typeof merchantOptions | typeof offerTypeOptions | typeof paymentOptions,
-) {
-  return items.flatMap((item) => [item, ...(item.children ?? [])]);
+function resolveImageUrl(url: string): string {
+  const cleanUrl = url.trim();
+  if (/^https?:\/\//i.test(cleanUrl)) return cleanUrl;
+  const base = getClientBackendOrigin().replace(/\/$/, "");
+  const path = cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`;
+  return `${base}${path}`;
 }
 
 export function ManageOffersTable({
   offers,
+  nameById,
   returnTo = "/admin/dashboard",
 }: {
   offers: AdminOffer[];
+  nameById: Record<string, string>;
   returnTo?: string;
 }) {
   const [viewingOffer, setViewingOffer] = useState<AdminOffer | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminOffer | null>(null);
-
-  const idToNameMap = useMemo(() => {
-    const map = new Map<string, string>();
-    [
-      ...flattenHierarchyOptions(offerTypeOptions),
-      ...flattenHierarchyOptions(categoryOptions),
-      ...flattenHierarchyOptions(merchantOptions),
-      ...flattenHierarchyOptions(paymentOptions),
-      ...bankOptions,
-      ...locationOptions,
-    ].forEach((item) => map.set(item.id, item.name));
-    return map;
-  }, []);
-
-  const getNames = (ids: string[]) => ids.map((id) => idToNameMap.get(id) ?? id);
+  const getNames = (ids: string[]) => ids.map((id) => nameById[id] ?? id);
 
   return (
     <>
@@ -89,25 +72,28 @@ export function ManageOffersTable({
                 <button
                   type="button"
                   onClick={() => setViewingOffer(offer)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center rounded-lg border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50"
+                  aria-label="View offer details"
+                  title="View"
                 >
-                  <Eye className="h-3.5 w-3.5" />
-                  View
+                  <Eye className="h-4 w-4" />
                 </button>
                 <Link
                   href={`/admin/offers?edit=${offer.id}`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center rounded-lg border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50"
+                  aria-label="Edit offer"
+                  title="Edit"
                 >
-                  <PencilLine className="h-3.5 w-3.5" />
-                  Edit
+                  <PencilLine className="h-4 w-4" />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setDeleteTarget(offer)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  className="inline-flex items-center rounded-lg border border-red-200 p-1.5 text-red-700 hover:bg-red-50"
+                  aria-label="Delete offer"
+                  title="Delete"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Delete
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </article>
@@ -172,25 +158,28 @@ export function ManageOffersTable({
                         <button
                           type="button"
                           onClick={() => setViewingOffer(offer)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          className="inline-flex items-center rounded-lg border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50"
+                          aria-label="View offer details"
+                          title="View"
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          View
+                          <Eye className="h-4 w-4" />
                         </button>
                         <Link
                           href={`/admin/offers?edit=${offer.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          className="inline-flex items-center rounded-lg border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50"
+                          aria-label="Edit offer"
+                          title="Edit"
                         >
-                          <PencilLine className="h-3.5 w-3.5" />
-                          Edit
+                          <PencilLine className="h-4 w-4" />
                         </Link>
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(offer)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                          className="inline-flex items-center rounded-lg border border-red-200 p-1.5 text-red-700 hover:bg-red-50"
+                          aria-label="Delete offer"
+                          title="Delete"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Delete
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -222,7 +211,7 @@ export function ManageOffersTable({
 
             <div className="mb-5 overflow-hidden rounded-xl ring-1 ring-slate-200">
               <Image
-                src={viewingOffer.heroImageUrl}
+                src={resolveImageUrl(viewingOffer.heroImageUrl)}
                 alt={viewingOffer.title}
                 width={1200}
                 height={700}

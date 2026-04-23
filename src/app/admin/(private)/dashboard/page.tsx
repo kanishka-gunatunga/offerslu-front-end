@@ -2,15 +2,10 @@ import Link from "next/link";
 import { AlertCircle, CheckCircle2, ChevronDown, Clock3, ListChecks, PlusCircle, Search } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { AdminPageToasts } from "@/components/admin/admin-page-toasts";
 import { ManageOffersTable } from "@/components/admin/manage-offers-table";
-import {
-  bankOptions,
-  categoryOptions,
-  locationOptions,
-  merchantOptions,
-  offerTypeOptions,
-} from "@/lib/admin/master-data";
-import { adminMockOffers, getOfferDashboardStats, getOfferStatus } from "@/lib/admin/mock-offers";
+import { getAdminOffersAllPagesServer, getAdminOffersServer, getAllMasterDataServer } from "@/lib/api/backend";
+import { getDaysLeft, getOfferStatus } from "@/lib/admin/mock-offers";
 
 const numberFormat = new Intl.NumberFormat("en-US");
 
@@ -45,50 +40,49 @@ export default async function AdminDashboardPage({
   const pageSize = Math.min(50, Math.max(5, Number(params.pageSize ?? "10") || 10));
   const deactivated = params.deactivated === "1";
   const hasError = params.error === "1";
-  const stats = getOfferDashboardStats(adminMockOffers);
+  const [masterData, allMeta, activeMeta, expiredMeta] = await Promise.all([
+    getAllMasterDataServer(),
+    getAdminOffersServer(new URLSearchParams({ page: "1", pageSize: "1", status: "all" })),
+    getAdminOffersServer(new URLSearchParams({ page: "1", pageSize: "1", status: "active" })),
+    getAdminOffersServer(new URLSearchParams({ page: "1", pageSize: "1", status: "expired" })),
+  ]);
 
-  const categories = categoryOptions.flatMap((group) => [group, ...(group.children ?? [])]);
-  const offerTypes = offerTypeOptions.flatMap((group) => [group, ...(group.children ?? [])]);
-  const merchants = merchantOptions.flatMap((group) => [group, ...(group.children ?? [])]);
+  const query = new URLSearchParams({ sort });
+  if (q) query.set("q", params.q ?? "");
+  if (status !== "all") query.set("status", status);
+  if (category !== "all") query.set("category", category);
+  if (offerType !== "all") query.set("offerType", offerType);
+  if (merchant !== "all") query.set("merchant", merchant);
+  if (bank !== "all") query.set("bank", bank);
+  if (location !== "all") query.set("location", location);
 
-  const filteredOffers = adminMockOffers
-    .filter((offer) => {
-      const matchesQ =
-        !q ||
-        offer.title.toLowerCase().includes(q) ||
-        offer.companyName.toLowerCase().includes(q) ||
-        offer.description.toLowerCase().includes(q);
-
-      const matchesStatus = status === "all" || getOfferStatus(offer) === status;
-      const matchesCategory = category === "all" || offer.categoryIds.includes(category);
-      const matchesOfferType = offerType === "all" || offer.offerTypeIds.includes(offerType);
-      const matchesMerchant = merchant === "all" || offer.merchantIds.includes(merchant);
-      const matchesBank = bank === "all" || offer.bankIds.includes(bank);
-      const matchesLocation = location === "all" || offer.locationIds.includes(location);
-
-      return (
-        matchesQ &&
-        matchesStatus &&
-        matchesCategory &&
-        matchesOfferType &&
-        matchesMerchant &&
-        matchesBank &&
-        matchesLocation
-      );
-    })
-    .sort((a, b) => {
-      if (sort === "titleAsc") return a.title.localeCompare(b.title);
-      if (sort === "titleDesc") return b.title.localeCompare(a.title);
-      if (sort === "startAsc") return Date.parse(a.startDate) - Date.parse(b.startDate);
-      if (sort === "endAsc") return Date.parse(a.endDate) - Date.parse(b.endDate);
-      return Date.parse(b.startDate) - Date.parse(a.startDate);
-    });
-  const totalPages = Math.max(1, Math.ceil(filteredOffers.length / pageSize));
+  const allFilteredOffers = await getAdminOffersAllPagesServer(query);
+  const totalFilteredOffers = allFilteredOffers.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredOffers / pageSize));
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedOffers = filteredOffers.slice(startIndex, startIndex + pageSize);
-  const visibleStart = filteredOffers.length === 0 ? 0 : startIndex + 1;
-  const visibleEnd = Math.min(startIndex + pageSize, filteredOffers.length);
+  const filteredOffers = allFilteredOffers.slice(startIndex, startIndex + pageSize);
+  const visibleStart = filteredOffers.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const visibleEnd = visibleStart === 0 ? 0 : visibleStart - 1 + filteredOffers.length;
+
+  const categories = masterData.categories.filter((item) => item.status === "active");
+  const offerTypes = masterData.offerTypes.filter((item) => item.status === "active");
+  const merchants = masterData.merchants.filter((item) => item.status === "active");
+  const banks = masterData.banks.filter((item) => item.status === "active");
+  const locations = masterData.locations.filter((item) => item.status === "active");
+  const nameById = Object.fromEntries(
+    [
+      ...masterData.offerTypes,
+      ...masterData.categories,
+      ...masterData.merchants,
+      ...masterData.payments,
+      ...masterData.banks,
+      ...masterData.locations,
+    ].map((item) => [item.id, item.name]),
+  );
+  const expiringSoon = filteredOffers.filter(
+    (offer) => getOfferStatus(offer) === "active" && getDaysLeft(offer) <= 7,
+  ).length;
 
   const getPageHref = (targetPage: number): string => {
     const query = new URLSearchParams();
@@ -152,39 +146,41 @@ export default async function AdminDashboardPage({
           </Link>
         </div>
       </div>
-      {deactivated ? (
-        <p className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-amber-200">
-          <CheckCircle2 className="h-4 w-4" />
-          Offer marked as inactive successfully.
-        </p>
-      ) : null}
-      {hasError ? (
-        <p className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-800 ring-1 ring-red-200">
-          <AlertCircle className="h-4 w-4" />
-          Missing required fields. Please complete the form and try again.
-        </p>
-      ) : null}
+      <AdminPageToasts
+        toasts={[
+          {
+            show: deactivated,
+            type: "success",
+            message: "Offer marked as inactive successfully.",
+          },
+          {
+            show: hasError,
+            type: "error",
+            message: "Missing required fields. Please provide title, dates, description, and banner image.",
+          },
+        ]}
+      />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={<ListChecks className="h-5 w-5" />}
           label="Total offers"
-          value={numberFormat.format(stats.totalOffers)}
+          value={numberFormat.format(allMeta.meta.totalItems)}
         />
         <StatCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="Active offers"
-          value={numberFormat.format(stats.activeOffers)}
+          value={numberFormat.format(activeMeta.meta.totalItems)}
         />
         <StatCard
           icon={<Clock3 className="h-5 w-5" />}
           label="Expiring in 7 days"
-          value={numberFormat.format(stats.expiringSoon)}
+          value={numberFormat.format(expiringSoon)}
         />
         <StatCard
           icon={<AlertCircle className="h-5 w-5" />}
           label="Expired offers"
-          value={numberFormat.format(stats.expiredOffers)}
+          value={numberFormat.format(expiredMeta.meta.totalItems)}
         />
       </section>
 
@@ -249,7 +245,7 @@ export default async function AdminDashboardPage({
 
               <SelectField name="bank" defaultValue={bank}>
                 <option value="all">All banks</option>
-                {bankOptions.map((item) => (
+                {banks.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
                   </option>
@@ -258,7 +254,7 @@ export default async function AdminDashboardPage({
 
               <SelectField name="location" defaultValue={location}>
                 <option value="all">All locations</option>
-                {locationOptions.map((item) => (
+                {locations.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
                   </option>
@@ -280,9 +276,9 @@ export default async function AdminDashboardPage({
             </form>
           </div>
           <p className="mb-4 text-sm text-slate-600">
-            Showing {visibleStart}-{visibleEnd} of {filteredOffers.length} filtered offers ({adminMockOffers.length} total).
+            Showing {visibleStart}-{visibleEnd} of {totalFilteredOffers} filtered offers ({allMeta.meta.totalItems} total).
           </p>
-          <ManageOffersTable offers={paginatedOffers} />
+          <ManageOffersTable offers={filteredOffers} nameById={nameById} />
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-600">
               Page {currentPage} of {totalPages}

@@ -1,11 +1,7 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { LogOut } from "lucide-react";
 
-import {
-  ADMIN_SESSION_COOKIE,
-  verifyAdminSessionToken,
-} from "@/lib/auth/admin-session";
+import { checkAdminSessionServer } from "@/lib/api/backend";
 import { AdminBrand } from "@/components/admin/admin-brand";
 import { AdminMobileSidebar } from "@/components/admin/admin-mobile-sidebar";
 import { AdminSidebarNav } from "@/components/admin/admin-sidebar-nav";
@@ -17,8 +13,7 @@ export default async function AdminPrivateLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const token = (await cookies()).get(ADMIN_SESSION_COOKIE)?.value;
-  if (!verifyAdminSessionToken(token)) {
+  if (!(await checkAdminSessionServer())) {
     redirect("/admin/login");
   }
 
