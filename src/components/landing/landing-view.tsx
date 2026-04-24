@@ -1,10 +1,10 @@
-import { resolvePromotionIds } from "@/lib/site/promotions";
 import type { SiteContent } from "@/lib/site/types";
 
 import { BanksSection } from "./banks-section";
 import { CategoryRow } from "./category-row";
 import { HeroSection } from "./hero-section";
 import { LandingFooter } from "./landing-footer";
+import { PromotionCornerDecor } from "./promotion-corner-decor";
 import { PromotionCarousel } from "./promotion-carousel";
 import { SiteHeader } from "./site-header";
 import { SocialSection } from "./social-section";
@@ -18,14 +18,23 @@ export function LandingView({ content }: { content: SiteContent }) {
       <main className="flex-1">
         <HeroSection hero={content.hero} />
         <CategoryRow categories={content.categories} />
-        {content.promotionSections.map((section) => (
-          <PromotionCarousel
-            key={section.id}
-            title={section.title}
-            subtitle={section.subtitle}
-            items={resolvePromotionIds(content, section.promotionIds)}
-          />
-        ))}
+        <section className="relative">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-20 left-0 z-0"
+          >
+            <PromotionCornerDecor />
+          </div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-0 right-0 z-0"
+          >
+            <PromotionCornerDecor />
+          </div>
+          <div className="relative z-10">
+            <PromotionCarousel items={content.promotions} />
+          </div>
+        </section>
         <BanksSection banks={content.banks} />
         <SocialSection links={content.socialLinks} />
       </main>

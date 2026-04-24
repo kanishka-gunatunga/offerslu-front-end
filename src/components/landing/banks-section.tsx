@@ -1,36 +1,53 @@
 import Image from "next/image";
+import { Open_Sans } from "next/font/google";
 
 import type { Bank } from "@/lib/site/types";
+
+const openSans = Open_Sans({
+  weight: ["600"],
+  subsets: ["latin"],
+});
 
 export function BanksSection({ banks }: { banks: Bank[] }) {
   return (
     <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       <div className="text-center">
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-          Offers by Rank
+        <h2
+          className={`${openSans.className} text-[clamp(1.35rem,3vw,30px)] font-semibold leading-6 tracking-normal text-black`}
+        >
+          Offers by Bank
         </h2>
-        <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-          Explore promotions linked to your card issuer.
+        <p
+          className={`${openSans.className} mt-2 text-[clamp(0.95rem,2.1vw,19px)] font-semibold leading-6 tracking-normal text-[#787878]`}
+        >
+          Bank your bank offers first
         </p>
       </div>
-      <div className="mt-6 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {banks.map((b) => (
           <div
             key={b.id}
-            className="flex flex-col items-center gap-2"
+            className="mx-auto flex w-full max-w-[190px] flex-col rounded-[15px] border border-[#DDDDDD] bg-white p-3"
           >
-            <div className="relative h-14 w-full overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <div className="flex min-h-[118px] flex-1 items-center justify-center px-2 pb-2 pt-3 sm:min-h-[126px]">
+              <div className="relative h-14 w-full max-w-[148px] overflow-hidden rounded-sm bg-white sm:h-16">
               <Image
                 src={b.logoUrl}
-                alt=""
+                alt={b.name}
                 fill
-                className="object-contain p-1.5"
-                sizes="160px"
+                className="object-contain"
+                sizes="148px"
               />
+              </div>
             </div>
-            <p className="text-center text-[11px] font-medium leading-snug text-slate-700 sm:text-xs">
+            <div className="mt-auto text-center">
+            <p className="text-[clamp(0.95rem,1.2vw,18px)] font-bold leading-normal text-[#1A1D29]">
               {b.name}
             </p>
+            <p className="mt-1 text-[11px] font-semibold leading-none text-[#7B7B7B]">
+              {b.offerCount} Offers
+            </p>
+            </div>
           </div>
         ))}
       </div>

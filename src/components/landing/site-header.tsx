@@ -12,6 +12,7 @@ export function SiteHeader({ siteName }: { siteName: string }) {
             width={150}
             height={35}
             priority
+            className="h-auto w-auto"
           />
         </Link>
       </div>

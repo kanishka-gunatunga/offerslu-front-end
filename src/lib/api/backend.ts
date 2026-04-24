@@ -31,10 +31,48 @@ export interface OffersListResponse {
   };
 }
 
+export interface PublicSiteCategoryResponse {
+  id: string;
+  name: string;
+  bannerImageUrl: string | null;
+  offerCount: number | null;
+}
+
+export interface PublicSitePromotionResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  offerBannerImageUrl: string | null;
+  startDate: string;
+  endDate: string;
+  companyName: string | null;
+  merchant: string | null;
+  category: string | null;
+  offerType: string | null;
+  daysLeft: number | null;
+}
+
+export interface PublicSiteBankResponse {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+  offerCount: number | null;
+}
+
+export interface PublicSiteContentResponse {
+  categories?: PublicSiteCategoryResponse[];
+  promotions?: PublicSitePromotionResponse[];
+  banks?: PublicSiteBankResponse[];
+}
+
 const DEFAULT_API_BASE_URL = "http://localhost:4000/api/v1";
 
 export function getApiBaseUrl() {
-  return process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL;
+  return process.env.API_BASE_URL ?? DEFAULT_API_BASE_URL;
+}
+
+export function getBackendOrigin() {
+  return new URL(getApiBaseUrl()).origin;
 }
 
 async function backendFetch(path: string, init?: RequestInit) {
@@ -48,6 +86,22 @@ async function backendFetch(path: string, init?: RequestInit) {
     headers,
     cache: "no-store",
   });
+}
+
+export async function getPublicSiteContentServer(): Promise<PublicSiteContentResponse | null> {
+  const response = await fetch(`${getApiBaseUrl()}/public/site-content`, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as unknown;
+  if (isPublicSiteContentResponse(payload)) return payload;
+  if (isObject(payload) && isPublicSiteContentResponse(payload.data)) return payload.data;
+  return null;
 }
 
 export async function checkAdminSessionServer(): Promise<boolean> {
@@ -163,5 +217,58 @@ function isOffersListResponse(value: unknown): value is OffersListResponse {
 function isAdminOffer(value: unknown): value is AdminOffer {
   if (!isObject(value)) return false;
   return typeof value.id === "string" && typeof value.title === "string";
+}
+
+function isPublicSiteCategory(value: unknown): value is PublicSiteCategoryResponse {
+  if (!isObject(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    (typeof value.bannerImageUrl === "string" || value.bannerImageUrl === null || value.bannerImageUrl === undefined) &&
+    (typeof value.offerCount === "number" || value.offerCount === null || value.offerCount === undefined)
+  );
+}
+
+function isPublicSitePromotion(value: unknown): value is PublicSitePromotionResponse {
+  if (!isObject(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.title === "string" &&
+    (typeof value.description === "string" || value.description === null || value.description === undefined) &&
+    (typeof value.offerBannerImageUrl === "string" ||
+      value.offerBannerImageUrl === null ||
+      value.offerBannerImageUrl === undefined) &&
+    typeof value.startDate === "string" &&
+    typeof value.endDate === "string" &&
+    (typeof value.companyName === "string" || value.companyName === null || value.companyName === undefined) &&
+    (typeof value.merchant === "string" || value.merchant === null || value.merchant === undefined) &&
+    (typeof value.category === "string" || value.category === null || value.category === undefined) &&
+    (typeof value.offerType === "string" || value.offerType === null || value.offerType === undefined) &&
+    (typeof value.daysLeft === "number" || value.daysLeft === null || value.daysLeft === undefined)
+  );
+}
+
+function isPublicSiteBank(value: unknown): value is PublicSiteBankResponse {
+  if (!isObject(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    (typeof value.logoUrl === "string" || value.logoUrl === null || value.logoUrl === undefined) &&
+    (typeof value.offerCount === "number" || value.offerCount === null || value.offerCount === undefined)
+  );
+}
+
+function isPublicSiteContentResponse(value: unknown): value is PublicSiteContentResponse {
+  if (!isObject(value)) return false;
+  const categoriesValid =
+    value.categories === undefined ||
+    (Array.isArray(value.categories) && value.categories.every(isPublicSiteCategory));
+  const promotionsValid =
+    value.promotions === undefined ||
+    (Array.isArray(value.promotions) && value.promotions.every(isPublicSitePromotion));
+  const banksValid =
+    value.banks === undefined ||
+    (Array.isArray(value.banks) && value.banks.every(isPublicSiteBank));
+  return categoriesValid && promotionsValid && banksValid;
 }
 

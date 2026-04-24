@@ -5,11 +5,7 @@ export function getClientApiBaseUrl() {
 }
 
 export function getClientBackendOrigin() {
-  try {
-    return new URL(getClientApiBaseUrl()).origin;
-  } catch {
-    return "http://localhost:4000";
-  }
+  return new URL(getClientApiBaseUrl()).origin;
 }
 
 export async function clientApiFetch(path: string, init?: RequestInit) {

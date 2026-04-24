@@ -4,13 +4,14 @@ export interface Category {
   id: Id;
   name: string;
   imageUrl: string;
+  offerCount: number;
 }
 
 export interface Bank {
   id: Id;
   name: string;
-  /** Square logo URL; can be initials service or uploaded asset later */
   logoUrl: string;
+  offerCount: number;
 }
 
 export interface Promotion {
@@ -18,11 +19,12 @@ export interface Promotion {
   title: string;
   description: string;
   bannerImageUrl: string;
-  providerName: string;
-  providerLogoUrl: string;
-  categoryLabel: string;
-  offerTypeLabel: string;
-  validUntilLabel: string;
+  merchant: string;
+  category: string;
+  offerType: string;
+  startDate: string;
+  endDate: string;
+  daysLeft: number | null;
   detailHref: string;
 }
 
