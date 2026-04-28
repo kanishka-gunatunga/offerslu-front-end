@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Open_Sans } from "next/font/google";
 
 import type { Promotion } from "@/lib/site/types";
@@ -88,53 +89,55 @@ function StatusIcon() {
 
 export function PromotionCard({ promotion }: { promotion: Promotion }) {
   return (
-    <article className="flex w-[min(100vw-1.5rem,320px)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-t border-[#E5E7EB] bg-white shadow-[0px_0px_4px_0px_#00000026] transition duration-300 ease-out sm:w-[340px] md:w-[360px] lg:w-[390px] xl:w-[405px]">
-      <div className="relative aspect-403/192 w-full bg-slate-100">
-        <Image
-          src={promotion.bannerImageUrl}
-          alt={promotion.title}
-          fill
-          className="object-cover object-top"
-          sizes="(max-width: 640px) calc(100vw - 1.5rem), 403px"
-        />
-      </div>
-      <div className={`flex flex-1 flex-col gap-2 p-4 ${openSans.className}`}>
-        <h3 className="line-clamp-2 text-[clamp(1rem,2.1vw,18px)] font-bold leading-normal text-[#1A1D29]">
-          {promotion.title}
-        </h3>
-        <p className="text-[clamp(0.9rem,1.9vw,16px)] font-semibold leading-normal text-[#6B7280]">
-          {promotion.merchant}
-        </p>
-        <p className="mt-3 line-clamp-2 text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#1A1D29]">
-          {promotion.description}
-        </p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-slate-200 pb-4">
-          <span className="inline-flex items-center gap-1.5">
-            <CategoryIcon />
-            <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#1A1D29]">
-              {promotion.category}
-            </span>
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <OfferTypeIcon />
-            <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#1A1D29]">
-              {promotion.offerType}
-            </span>
-          </span>
+    <Link href={promotion.detailHref} className="block shrink-0 snap-start focus:outline-none">
+      <article className="flex w-[min(100vw-1.5rem,320px)] flex-col overflow-hidden rounded-2xl border border-t border-[#E5E7EB] bg-white shadow-[0px_0px_4px_0px_#00000026] transition duration-300 ease-out hover:-translate-y-0.5 sm:w-[340px] md:w-[360px] lg:w-[390px] xl:w-[405px]">
+        <div className="relative aspect-403/192 w-full bg-slate-100">
+          <Image
+            src={promotion.bannerImageUrl}
+            alt={promotion.title}
+            fill
+            className="object-cover object-top"
+            sizes="(max-width: 640px) calc(100vw - 1.5rem), 403px"
+          />
         </div>
-        <p className="mt-1 inline-flex items-center gap-2">
-          <DateIcon />
-          <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#6B7280]">
-            {formatDateLabel(promotion.startDate)} - {formatDateLabel(promotion.endDate)}
-          </span>
-        </p>
-        <p className="inline-flex items-center gap-2">
-          <StatusIcon />
-          <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#F41414]">
-            {daysLeftLabel(promotion.daysLeft)}
-          </span>
-        </p>
-      </div>
-    </article>
+        <div className={`flex flex-1 flex-col gap-2 p-4 ${openSans.className}`}>
+          <h3 className="line-clamp-2 text-[clamp(1rem,2.1vw,18px)] font-bold leading-normal text-[#1A1D29]">
+            {promotion.title}
+          </h3>
+          <p className="text-[clamp(0.9rem,1.9vw,16px)] font-semibold leading-normal text-[#6B7280]">
+            {promotion.merchant}
+          </p>
+          <p className="mt-3 line-clamp-2 text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#1A1D29]">
+            {promotion.description}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-slate-200 pb-4">
+            <span className="inline-flex items-center gap-1.5">
+              <CategoryIcon />
+              <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#1A1D29]">
+                {promotion.category}
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <OfferTypeIcon />
+              <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#1A1D29]">
+                {promotion.offerType}
+              </span>
+            </span>
+          </div>
+          <p className="mt-1 inline-flex items-center gap-2">
+            <DateIcon />
+            <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#6B7280]">
+              {formatDateLabel(promotion.startDate)} - {formatDateLabel(promotion.endDate)}
+            </span>
+          </p>
+          <p className="inline-flex items-center gap-2">
+            <StatusIcon />
+            <span className="text-[clamp(0.9rem,1.9vw,16px)] font-normal leading-normal text-[#F41414]">
+              {daysLeftLabel(promotion.daysLeft)}
+            </span>
+          </p>
+        </div>
+      </article>
+    </Link>
   );
 }

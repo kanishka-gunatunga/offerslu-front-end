@@ -32,10 +32,28 @@ export function LandingView({ content }: { content: SiteContent }) {
             <PromotionCornerDecor />
           </div>
           <div className="relative z-10">
-            <PromotionCarousel items={content.promotions} />
+            <PromotionCarousel
+              title="Latest Promotions"
+              subtitle="Check out the latest promotions just for you!"
+              items={content.promotions}
+            />
           </div>
         </section>
         <BanksSection banks={content.banks} />
+        {content.clothingPromotions.length > 0 ? (
+          <PromotionCarousel
+            title="Clothing Promotions"
+            subtitle="Explore personalized clothing deals just for you!"
+            items={content.clothingPromotions}
+          />
+        ) : null}
+        {content.foodPromotions.length > 0 ? (
+          <PromotionCarousel
+            title="Foods Promotions"
+            subtitle="Explore food restaurants exclusive offers for you!"
+            items={content.foodPromotions}
+          />
+        ) : null}
         <SocialSection links={content.socialLinks} />
       </main>
       <LandingFooter siteName={content.siteName} />

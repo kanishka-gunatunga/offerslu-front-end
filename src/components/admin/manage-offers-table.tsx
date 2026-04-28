@@ -236,6 +236,14 @@ export function ManageOffersTable({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Description</p>
               <p className="mt-2 text-sm text-slate-700">{viewingOffer.description}</p>
             </div>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Offer Details
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+                {viewingOffer.offerDetails?.trim() || viewingOffer.description}
+              </p>
+            </div>
 
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <button

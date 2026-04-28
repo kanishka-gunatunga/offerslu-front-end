@@ -1,12 +1,20 @@
 import "server-only";
 
-import { getBackendOrigin, getPublicSiteContentServer } from "@/lib/api/backend";
+import {
+  getBackendOrigin,
+  getPublicPromotionsByCategoryServer,
+  getPublicSiteContentServer,
+} from "@/lib/api/backend";
 
 import { defaultSiteContent } from "./default-content";
 import type { SiteContent } from "./types";
 
 export async function getSiteContent(): Promise<SiteContent> {
-  const apiContent = await getPublicSiteContentServer();
+  const [apiContent, clothingRaw, foodRaw] = await Promise.all([
+    getPublicSiteContentServer(),
+    getPublicPromotionsByCategoryServer("Fashion & Clothing"),
+    getPublicPromotionsByCategoryServer("Food & Dining"),
+  ]);
   const backendOrigin = getBackendOrigin();
   const categories = (apiContent?.categories ?? [])
     .filter((c) => Boolean(c.id) && Boolean(c.name))
@@ -19,24 +27,50 @@ export async function getSiteContent(): Promise<SiteContent> {
           : "/hero-bg.png",
       offerCount: Number(c.offerCount ?? 0),
     }));
-  const promotions = (apiContent?.promotions ?? [])
+  const mapPromotion = (p: {
+    id: string;
+    title: string;
+    description: string | null;
+    offerBannerImageUrl: string | null;
+    merchant: string | null;
+    category: string | null;
+    offerType: string | null;
+    startDate: string;
+    endDate: string;
+    daysLeft: number | null;
+  }) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description?.trim() || "No description available.",
+    bannerImageUrl:
+      p.offerBannerImageUrl && p.offerBannerImageUrl.trim().length > 0
+        ? `${backendOrigin}${p.offerBannerImageUrl}`
+        : "/hero-bg.png",
+    merchant: p.merchant?.trim() || "Unknown merchant",
+    category: p.category?.trim() || "General",
+    offerType: p.offerType?.trim() || "Promotion",
+    startDate: p.startDate,
+    endDate: p.endDate,
+    daysLeft: p.daysLeft ?? null,
+    detailHref: `/promotions/${p.id}`,
+  });
+
+  const allLatestPromotions = (apiContent?.promotions ?? [])
     .filter((p) => Boolean(p.id) && Boolean(p.title))
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      description: p.description?.trim() || "No description available.",
-      bannerImageUrl:
-        p.offerBannerImageUrl && p.offerBannerImageUrl.trim().length > 0
-          ? `${backendOrigin}${p.offerBannerImageUrl}`
-          : "/hero-bg.png",
-      merchant: p.merchant?.trim() || "Unknown merchant",
-      category: p.category?.trim() || "General",
-      offerType: p.offerType?.trim() || "Promotion",
-      startDate: p.startDate,
-      endDate: p.endDate,
-      daysLeft: p.daysLeft ?? null,
-      detailHref: "#",
-    }));
+    .map(mapPromotion);
+  const clothingPromotions = (clothingRaw ?? [])
+    .filter((p) => Boolean(p.id) && Boolean(p.title))
+    .map(mapPromotion);
+  const foodPromotions = (foodRaw ?? [])
+    .filter((p) => Boolean(p.id) && Boolean(p.title))
+    .map(mapPromotion);
+  const categoryPromotionIds = new Set([
+    ...clothingPromotions.map((p) => p.id),
+    ...foodPromotions.map((p) => p.id),
+  ]);
+  const dedupedLatestPromotions = allLatestPromotions.filter((p) => !categoryPromotionIds.has(p.id));
+  // Prefer variety across sections; if dedupe leaves too few cards, keep latest unfiltered.
+  const promotions = dedupedLatestPromotions.length >= 3 ? dedupedLatestPromotions : allLatestPromotions;
   const banks = (apiContent?.banks ?? [])
     .filter((b) => Boolean(b.id) && Boolean(b.name))
     .map((b) => ({
@@ -53,6 +87,8 @@ export async function getSiteContent(): Promise<SiteContent> {
     ...defaultSiteContent,
     categories: apiContent ? categories : defaultSiteContent.categories,
     promotions: apiContent ? promotions : defaultSiteContent.promotions,
+    clothingPromotions: clothingRaw ? clothingPromotions : defaultSiteContent.clothingPromotions,
+    foodPromotions: foodRaw ? foodPromotions : defaultSiteContent.foodPromotions,
     banks: apiContent ? banks : defaultSiteContent.banks,
   };
 }

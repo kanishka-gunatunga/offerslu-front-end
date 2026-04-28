@@ -13,6 +13,8 @@ export const defaultSiteContent: SiteContent = {
   },
   categories: [],
   promotions: [],
+  clothingPromotions: [],
+  foodPromotions: [],
   promotionSections: [],
   banks: [],
   about: {

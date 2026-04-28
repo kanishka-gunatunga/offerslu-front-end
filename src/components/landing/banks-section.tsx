@@ -23,11 +23,11 @@ export function BanksSection({ banks }: { banks: Bank[] }) {
           Bank your bank offers first
         </p>
       </div>
-      <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      <div className="mt-12 flex flex-wrap justify-center gap-5">
         {banks.map((b) => (
           <div
             key={b.id}
-            className="mx-auto flex w-full max-w-[190px] flex-col rounded-[15px] border border-[#DDDDDD] bg-white p-3"
+            className="flex w-full max-w-[190px] flex-col rounded-[15px] border border-[#DDDDDD] bg-white p-3 sm:w-[186px]"
           >
             <div className="flex min-h-[118px] flex-1 items-center justify-center px-2 pb-2 pt-3 sm:min-h-[126px]">
               <div className="relative h-14 w-full max-w-[148px] overflow-hidden rounded-sm bg-white sm:h-16">

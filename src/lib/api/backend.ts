@@ -52,6 +52,20 @@ export interface PublicSitePromotionResponse {
   daysLeft: number | null;
 }
 
+export interface PublicPromotionDetailResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  offerDetails?: string | null;
+  offerBannerImageUrl: string | null;
+  startDate: string;
+  endDate: string;
+  merchant: string | null;
+  category: string | null;
+  offerType: string | null;
+  daysLeft: number | null;
+}
+
 export interface PublicSiteBankResponse {
   id: string;
   name: string;
@@ -102,6 +116,72 @@ export async function getPublicSiteContentServer(): Promise<PublicSiteContentRes
   if (isPublicSiteContentResponse(payload)) return payload;
   if (isObject(payload) && isPublicSiteContentResponse(payload.data)) return payload.data;
   return null;
+}
+
+export async function getPublicPromotionsByCategoryServer(
+  category: string,
+): Promise<PublicSitePromotionResponse[] | null> {
+  const response = await fetch(
+    `${getApiBaseUrl()}/public/promotions?category=${encodeURIComponent(category)}`,
+    {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as unknown;
+  if (Array.isArray(payload) && payload.every(isPublicSitePromotion)) return payload;
+  if (
+    isObject(payload) &&
+    Array.isArray(payload.promotions) &&
+    payload.promotions.every(isPublicSitePromotion)
+  ) {
+    return payload.promotions;
+  }
+  if (
+    isObject(payload) &&
+    isObject(payload.data) &&
+    Array.isArray(payload.data.promotions) &&
+    payload.data.promotions.every(isPublicSitePromotion)
+  ) {
+    return payload.data.promotions;
+  }
+  return null;
+}
+
+export async function getPublicPromotionByIdServer(
+  id: string,
+): Promise<PublicPromotionDetailResponse | null> {
+  if (!id) return null;
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/public/promotions/${encodeURIComponent(id)}`, {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as unknown;
+    if (isPublicPromotionDetail(payload)) return payload;
+    if (isObject(payload) && isPublicPromotionDetail(payload.promotion)) return payload.promotion;
+    if (isObject(payload) && isPublicPromotionDetail(payload.data)) return payload.data;
+    if (
+      isObject(payload) &&
+      isObject(payload.data) &&
+      isPublicPromotionDetail(payload.data.promotion)
+    ) {
+      return payload.data.promotion;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function checkAdminSessionServer(): Promise<boolean> {
@@ -241,6 +321,27 @@ function isPublicSitePromotion(value: unknown): value is PublicSitePromotionResp
     typeof value.startDate === "string" &&
     typeof value.endDate === "string" &&
     (typeof value.companyName === "string" || value.companyName === null || value.companyName === undefined) &&
+    (typeof value.merchant === "string" || value.merchant === null || value.merchant === undefined) &&
+    (typeof value.category === "string" || value.category === null || value.category === undefined) &&
+    (typeof value.offerType === "string" || value.offerType === null || value.offerType === undefined) &&
+    (typeof value.daysLeft === "number" || value.daysLeft === null || value.daysLeft === undefined)
+  );
+}
+
+function isPublicPromotionDetail(value: unknown): value is PublicPromotionDetailResponse {
+  if (!isObject(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.title === "string" &&
+    (typeof value.description === "string" || value.description === null || value.description === undefined) &&
+    (typeof value.offerDetails === "string" ||
+      value.offerDetails === null ||
+      value.offerDetails === undefined) &&
+    (typeof value.offerBannerImageUrl === "string" ||
+      value.offerBannerImageUrl === null ||
+      value.offerBannerImageUrl === undefined) &&
+    typeof value.startDate === "string" &&
+    typeof value.endDate === "string" &&
     (typeof value.merchant === "string" || value.merchant === null || value.merchant === undefined) &&
     (typeof value.category === "string" || value.category === null || value.category === undefined) &&
     (typeof value.offerType === "string" || value.offerType === null || value.offerType === undefined) &&

@@ -196,6 +196,16 @@ export function AddOfferForm({
           className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none ring-sky-500/30 focus:border-sky-500 focus:ring-2"
         />
       </label>
+      <label className="block text-sm font-medium text-slate-700">
+        Offer details (Optional)
+        <textarea
+          name="offerDetails"
+          rows={8}
+          placeholder="Add full promotion details, terms, exclusions, and redemption instructions..."
+          defaultValue={initialValues?.offerDetails ?? ""}
+          className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none ring-sky-500/30 focus:border-sky-500 focus:ring-2"
+        />
+      </label>
       <div className="flex justify-end">
         <button
           type="submit"

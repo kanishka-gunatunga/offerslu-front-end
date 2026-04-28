@@ -33,8 +33,12 @@ function RightArrowIcon() {
 }
 
 export function PromotionCarousel({
+  title,
+  subtitle,
   items,
 }: {
+  title: string;
+  subtitle: string;
   items: Promotion[];
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -74,12 +78,12 @@ export function PromotionCarousel({
           <h2
             className={`${openSans.className} text-[clamp(1.35rem,3vw,30px)] font-semibold leading-6 tracking-normal text-black`}
           >
-            Latest Promotions
+            {title}
           </h2>
           <p
             className={`${openSans.className} mt-3 text-[clamp(0.95rem,2.1vw,19px)] font-semibold leading-6 tracking-normal text-[#787878]`}
           >
-            Check out the latest promotions just for you!
+            {subtitle}
           </p>
         </div>
         <div className="relative mt-12 overflow-visible">

@@ -68,6 +68,8 @@ export interface SiteContent {
   categories: Category[];
   promotionSections: PromotionSection[];
   promotions: Promotion[];
+  clothingPromotions: Promotion[];
+  foodPromotions: Promotion[];
   banks: Bank[];
   about: AboutContent;
   socialLinks: SocialLink[];

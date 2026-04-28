@@ -7,6 +7,7 @@ export interface AdminOffer {
   companyLogoUrl: string;
   heroImageUrl: string;
   description: string;
+  offerDetails?: string | null;
   category: string;
   offerType: string;
   startDate: string;
