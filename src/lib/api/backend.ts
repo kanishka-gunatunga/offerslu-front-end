@@ -64,6 +64,7 @@ export interface PublicPromotionDetailResponse {
   category: string | null;
   offerType: string | null;
   daysLeft: number | null;
+  relatedTags?: string[] | null;
 }
 
 export interface PublicSiteBankResponse {
@@ -330,6 +331,10 @@ function isPublicSitePromotion(value: unknown): value is PublicSitePromotionResp
 
 function isPublicPromotionDetail(value: unknown): value is PublicPromotionDetailResponse {
   if (!isObject(value)) return false;
+  const relatedTagsOk =
+    value.relatedTags === undefined ||
+    value.relatedTags === null ||
+    (Array.isArray(value.relatedTags) && value.relatedTags.every((item) => typeof item === "string"));
   return (
     typeof value.id === "string" &&
     typeof value.title === "string" &&
@@ -345,7 +350,8 @@ function isPublicPromotionDetail(value: unknown): value is PublicPromotionDetail
     (typeof value.merchant === "string" || value.merchant === null || value.merchant === undefined) &&
     (typeof value.category === "string" || value.category === null || value.category === undefined) &&
     (typeof value.offerType === "string" || value.offerType === null || value.offerType === undefined) &&
-    (typeof value.daysLeft === "number" || value.daysLeft === null || value.daysLeft === undefined)
+    (typeof value.daysLeft === "number" || value.daysLeft === null || value.daysLeft === undefined) &&
+    relatedTagsOk
   );
 }
 
