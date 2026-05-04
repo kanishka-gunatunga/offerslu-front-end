@@ -1,3 +1,4 @@
+import { HOME_CONNECT_WITH_US_ID } from "@/lib/site/home-section-anchors";
 import type { SocialLink } from "@/lib/site/types";
 import { Inter, Open_Sans } from "next/font/google";
 
@@ -130,12 +131,22 @@ function socialMeta(icon: SocialLink["icon"]) {
 
 export function SocialSection({ links }: { links: SocialLink[] }) {
   return (
-    <section className="relative overflow-hidden py-10 sm:py-12">
-      <div aria-hidden className="pointer-events-none absolute top-4 left-0 z-0">
-        <PromotionCornerDecor mirrored />
-      </div>
-      <div aria-hidden className="pointer-events-none absolute top-0 right-0 z-0">
-        <PromotionCornerDecor />
+    <section
+      id={HOME_CONNECT_WITH_US_ID}
+      className="relative scroll-mt-24 overflow-x-clip overflow-y-visible py-10 sm:py-12"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 left-1/2 z-0 w-full max-w-[1400px] -translate-x-1/2"
+      >
+        <div className="relative h-full min-h-px w-full">
+          <div className="absolute top-[81px] left-[5.571429%] z-0 h-[147px] w-[49px] max-sm:top-[64px] max-sm:scale-[0.62] max-sm:origin-top-left sm:scale-100">
+            <PromotionCornerDecor className="h-full w-full" />
+          </div>
+          <div className="absolute top-[-18px] left-[94.642857%] z-0 h-[213px] w-[70px] max-sm:top-[-12px] max-sm:scale-[0.62] max-sm:origin-top-right sm:scale-100">
+            <PromotionCornerDecor className="h-full w-full" />
+          </div>
+        </div>
       </div>
       <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="text-center">

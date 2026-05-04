@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import { Open_Sans } from "next/font/google";
 
+import { SEARCH_RESULTS_SECTION_ID } from "@/lib/site/search-results-anchor";
 import type { Category } from "@/lib/site/types";
 
 const openSans = Open_Sans({
@@ -107,11 +109,13 @@ export function CategoryRow({ categories }: { categories: Category[] }) {
               : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-7"
           }`}
         >
-          {categories.map((c) => (
-            <button
+          {categories.map((c) => {
+            const searchHref = `/search-results?${new URLSearchParams({ categories: c.name }).toString()}#${SEARCH_RESULTS_SECTION_ID}`;
+            return (
+            <Link
               key={c.id}
-              type="button"
-              className={`group relative w-full overflow-hidden rounded-2xl bg-[#d9d9d9] text-left shadow-sm ring-1 ring-slate-200/80 transition hover:shadow-md ${showArrows ? "snap-start" : ""}`}
+              href={searchHref}
+              className={`group relative block w-full overflow-hidden rounded-2xl bg-[#d9d9d9] text-left shadow-sm ring-1 ring-slate-200/80 transition hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#0066FF] focus-visible:ring-offset-2 focus-visible:outline-none ${showArrows ? "snap-start" : ""}`}
             >
               <span className="relative block aspect-173/234 w-full min-h-[180px] sm:min-h-[210px]">
                 <Image
@@ -138,8 +142,9 @@ export function CategoryRow({ categories }: { categories: Category[] }) {
                   {c.offerCount} offers
                 </span>
               </span>
-            </button>
-          ))}
+            </Link>
+            );
+          })}
         </div>
           </>
         ) : null}

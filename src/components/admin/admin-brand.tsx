@@ -1,14 +1,22 @@
 import Image from "next/image";
 import Link from "next/link";
 
-export function AdminBrand({ compact = false }: { compact?: boolean }) {
+export function AdminBrand({
+  compact = false,
+  logoSrc = "/offerslu-logo.svg",
+  href = "/admin/dashboard",
+}: {
+  compact?: boolean;
+  logoSrc?: string;
+  href?: string;
+}) {
   return (
     <Link
-      href="/admin/dashboard"
+      href={href}
       className={`flex items-center leading-none ${compact ? "gap-2.5" : "gap-3"}`}
     >
       <Image
-        src="/offerslu-logo.svg"
+        src={logoSrc}
         alt="Offerlu logo"
         width={compact ? 112 : 140}
         height={compact ? 24 : 32}

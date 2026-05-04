@@ -80,6 +80,21 @@ export interface PublicSiteContentResponse {
   banks?: PublicSiteBankResponse[];
 }
 
+export interface PublicPromotionSearchParams {
+  q?: string;
+  categories?: string[];
+  offerTypes?: string[];
+  paymentTypes?: string[];
+  banks?: string[];
+}
+
+export interface PublicSearchFiltersResponse {
+  categories: string[];
+  offerTypes: string[];
+  paymentTypes: string[];
+  banks: string[];
+}
+
 const DEFAULT_API_BASE_URL = "http://localhost:4000/api/v1";
 
 export function getApiBaseUrl() {
@@ -154,6 +169,73 @@ export async function getPublicPromotionsByCategoryServer(
   return null;
 }
 
+export async function searchPublicPromotionsServer(
+  params: PublicPromotionSearchParams,
+): Promise<PublicSitePromotionResponse[] | null> {
+  const qs = new URLSearchParams();
+  if (params.q?.trim()) qs.set("q", params.q.trim());
+  if (params.categories && params.categories.length > 0) qs.set("categories", params.categories.join(","));
+  if (params.offerTypes && params.offerTypes.length > 0) qs.set("offerTypes", params.offerTypes.join(","));
+  if (params.paymentTypes && params.paymentTypes.length > 0) {
+    qs.set("paymentTypes", params.paymentTypes.join(","));
+  }
+  if (params.banks && params.banks.length > 0) qs.set("banks", params.banks.join(","));
+
+  const response = await fetch(`${getApiBaseUrl()}/public/promotions/search?${qs.toString()}`, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as unknown;
+  if (Array.isArray(payload) && payload.every(isPublicSitePromotion)) return payload;
+  if (
+    isObject(payload) &&
+    Array.isArray(payload.promotions) &&
+    payload.promotions.every(isPublicSitePromotion)
+  ) {
+    return payload.promotions;
+  }
+  if (
+    isObject(payload) &&
+    isObject(payload.data) &&
+    Array.isArray(payload.data.promotions) &&
+    payload.data.promotions.every(isPublicSitePromotion)
+  ) {
+    return payload.data.promotions;
+  }
+  return null;
+}
+
+export async function getPublicSearchFiltersServer(): Promise<PublicSearchFiltersResponse | null> {
+  const response = await fetch(`${getApiBaseUrl()}/public/promotions/search-filters`, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as unknown;
+  if (isPublicSearchFilters(payload)) return payload;
+  if (isObject(payload) && isPublicSearchFilters(payload.filters)) return payload.filters;
+  if (isObject(payload) && isObject(payload.data) && isPublicSearchFilters(payload.data)) {
+    return payload.data;
+  }
+  if (
+    isObject(payload) &&
+    isObject(payload.data) &&
+    isPublicSearchFilters(payload.data.filters)
+  ) {
+    return payload.data.filters;
+  }
+  return null;
+}
+
 export async function getPublicPromotionByIdServer(
   id: string,
 ): Promise<PublicPromotionDetailResponse | null> {
@@ -186,10 +268,14 @@ export async function getPublicPromotionByIdServer(
 }
 
 export async function checkAdminSessionServer(): Promise<boolean> {
-  const response = await backendFetch("/admin/auth/session");
-  if (response.status === 200) return true;
-  if (response.status === 401) return false;
-  return false;
+  try {
+    const response = await backendFetch("/admin/auth/session");
+    if (response.status === 200) return true;
+    if (response.status === 401) return false;
+    return false;
+  } catch {
+    return false;
+  }
 }
 
 export async function getAdminOffersServer(query: URLSearchParams): Promise<OffersListResponse> {
@@ -377,5 +463,16 @@ function isPublicSiteContentResponse(value: unknown): value is PublicSiteContent
     value.banks === undefined ||
     (Array.isArray(value.banks) && value.banks.every(isPublicSiteBank));
   return categoriesValid && promotionsValid && banksValid;
+}
+
+function isPublicSearchFilters(value: unknown): value is PublicSearchFiltersResponse {
+  if (!isObject(value)) return false;
+  const isStringArray = (v: unknown) => Array.isArray(v) && v.every((item) => typeof item === "string");
+  return (
+    isStringArray(value.categories) &&
+    isStringArray(value.offerTypes) &&
+    isStringArray(value.paymentTypes) &&
+    isStringArray(value.banks)
+  );
 }
 

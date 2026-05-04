@@ -170,7 +170,7 @@ export default async function PromotionDetailPage({
           >
             Share this promotion
           </h2>
-          <div className="mt-8 grid grid-cols-3 gap-3">
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <ShareCard label="Facebook" icon="facebook" />
             <ShareCard label="WhatsApp" icon="whatsapp" />
             <ShareCard label="Twitter" icon="x" />
@@ -244,7 +244,7 @@ function ShareCard({ label, icon }: { label: string; icon: "facebook" | "whatsap
   return (
     <button
       type="button"
-      className={`${openSans.className} flex min-h-[clamp(6.2rem,13vw,9.125rem)] w-full flex-col items-center justify-center rounded-[15px] border border-[#DDDDDD] px-3 py-[clamp(0.8rem,2vw,1.2rem)] text-center transition hover:brightness-95 ${bgClass}`}
+      className={`${openSans.className} flex min-h-[clamp(6.2rem,13vw,9.125rem)] w-full min-w-0 flex-col items-center justify-center rounded-[15px] border border-[#DDDDDD] px-3 py-[clamp(0.8rem,2vw,1.2rem)] text-center transition hover:brightness-95 ${bgClass}`}
     >
       <span className="mx-auto block h-[clamp(1.8rem,4vw,2.5rem)] w-[clamp(1.8rem,4vw,2.5rem)]">
         {icon === "facebook" ? (
@@ -275,7 +275,7 @@ function ShareCard({ label, icon }: { label: string; icon: "facebook" | "whatsap
           </svg>
         ) : null}
       </span>
-      <span className="mt-1 block text-[clamp(1rem,1.8vw,1.125rem)] font-semibold leading-6 tracking-normal text-[#1A1D29]">
+      <span className="mt-3 block text-[clamp(1rem,1.8vw,1.125rem)] font-semibold leading-6 tracking-normal text-[#1A1D29]">
         {label}
       </span>
     </button>

@@ -1,7 +1,10 @@
 import Image from "next/image";
 import { Open_Sans } from "next/font/google";
 
+import { HOME_OFFERS_BY_BANK_ID } from "@/lib/site/home-section-anchors";
 import type { Bank } from "@/lib/site/types";
+
+import { PromotionCornerDecor } from "./promotion-corner-decor";
 
 const openSans = Open_Sans({
   weight: ["600"],
@@ -10,8 +13,25 @@ const openSans = Open_Sans({
 
 export function BanksSection({ banks }: { banks: Bank[] }) {
   return (
-    <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-      <div className="text-center">
+    <section
+      id={HOME_OFFERS_BY_BANK_ID}
+      className="relative mx-auto max-w-[1400px] scroll-mt-24 overflow-x-clip px-4 py-8 sm:px-6 sm:py-10 lg:px-8"
+    >
+      
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-1/2 z-0 w-full max-w-[1400px] -translate-x-1/2"
+      >
+        <div className="relative min-h-[280px] w-full">
+          <div className="absolute top-[119px] left-[1.857143%] z-0 h-[245px] w-[81px] max-sm:scale-[0.62] max-sm:origin-top-left sm:scale-100">
+            <PromotionCornerDecor className="h-full w-full" />
+          </div>
+          <div className="absolute top-[-9px] left-[88.642857%] z-0 h-[154px] w-[51px] max-sm:scale-[0.62] max-sm:origin-top-right sm:scale-100">
+            <PromotionCornerDecor className="h-full w-full" />
+          </div>
+        </div>
+      </div>
+      <div className="relative z-10 text-center">
         <h2
           className={`${openSans.className} text-[clamp(1.35rem,3vw,30px)] font-semibold leading-6 tracking-normal text-black`}
         >
@@ -23,7 +43,7 @@ export function BanksSection({ banks }: { banks: Bank[] }) {
           Bank your bank offers first
         </p>
       </div>
-      <div className="mt-12 flex flex-wrap justify-center gap-5">
+      <div className="relative z-10 mt-12 flex flex-wrap justify-center gap-5">
         {banks.map((b) => (
           <div
             key={b.id}

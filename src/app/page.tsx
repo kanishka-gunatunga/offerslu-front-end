@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LandingView } from "@/components/landing/landing-view";
+import { getPublicSearchFiltersServer } from "@/lib/api/backend";
 import { getSiteContent } from "@/lib/site/store";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,5 +15,19 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Home() {
   const content = await getSiteContent();
-  return <LandingView content={content} />;
+  const apiFilters = await getPublicSearchFiltersServer();
+  const fallbackFilters = {
+    categories: content.categories.map((category) => category.name),
+    offerTypes: Array.from(
+      new Set(
+        content.promotions
+          .flatMap((promotion) => promotion.offerType.split(","))
+          .map((item) => item.trim())
+          .filter(Boolean),
+      ),
+    ),
+    paymentTypes: ["Cash", "Card", "Nexus", "Vouchers"],
+    banks: content.banks.map((bank) => bank.name),
+  };
+  return <LandingView content={content} searchFilters={apiFilters ?? fallbackFilters} />;
 }
