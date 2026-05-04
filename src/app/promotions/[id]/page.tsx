@@ -5,10 +5,8 @@ import { Inter, Open_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 
 import { LandingFooter } from "@/components/landing/landing-footer";
-import {
-  getBackendOrigin,
-  getPublicPromotionByIdServer,
-} from "@/lib/api/backend";
+import { ServiceUnavailableScreen } from "@/components/site/service-unavailable-screen";
+import { getBackendOrigin, getPublicPromotionByIdServer } from "@/lib/api/backend";
 import { defaultSiteContent } from "@/lib/site/default-content";
 
 const inter = Inter({
@@ -43,8 +41,31 @@ export default async function PromotionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const promotion = await getPublicPromotionByIdServer(id);
-  if (!promotion) notFound();
+  const load = await getPublicPromotionByIdServer(id);
+  if (load.kind === "not_found") notFound();
+  if (load.kind === "unavailable") {
+    return (
+      <div className={`${inter.className} min-h-screen bg-white text-[#111827]`}>
+        <header className="border-b border-[#DDDDDD] bg-white">
+          <div className="mx-auto flex h-[62px] w-full max-w-[1400px] items-center px-4 sm:px-6 lg:px-8">
+            <Link href="/">
+              <Image
+                src="/logo-blue.png"
+                alt="Offerslu.lk"
+                width={175}
+                height={80}
+                priority
+                className="h-8 w-auto"
+              />
+            </Link>
+          </div>
+        </header>
+        <ServiceUnavailableScreen variant="embedded" />
+        <LandingFooter siteName={defaultSiteContent.siteName} />
+      </div>
+    );
+  }
+  const promotion = load.promotion;
 
   const backendOrigin = getBackendOrigin();
   const bannerImageUrl =

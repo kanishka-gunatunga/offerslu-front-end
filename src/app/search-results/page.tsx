@@ -15,6 +15,7 @@ import {
   searchPublicPromotionsServer,
   type PublicSitePromotionResponse,
 } from "@/lib/api/backend";
+import { ServiceUnavailableScreen } from "@/components/site/service-unavailable-screen";
 import { getSiteContent } from "@/lib/site/store";
 import type { Promotion } from "@/lib/site/types";
 
@@ -55,7 +56,11 @@ export default async function SearchResultsPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
-  const content = await getSiteContent();
+  const site = await getSiteContent();
+  if (!site.ok) {
+    return <ServiceUnavailableScreen />;
+  }
+  const content = site.content;
 
   const q = params.q?.trim() ?? "";
   const categories = splitCsvParam(params.categories);
@@ -75,6 +80,7 @@ export default async function SearchResultsPage({
   });
 
   const uiResults = (backendResults ?? []).map(mapPublicPromotionToUi);
+  const usedSearchFallback = backendResults === null;
   const results = backendResults ? uiResults : filterLocally(content.promotions, q, categories, offerTypes);
 
   const apiFilters = await getPublicSearchFiltersServer();
@@ -133,6 +139,16 @@ export default async function SearchResultsPage({
             >
               Find offers that match your interests
             </p>
+
+            {usedSearchFallback ? (
+              <p
+                className={`${openSans.className} mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm font-medium text-amber-950`}
+                role="status"
+              >
+                Live search is temporarily unavailable. Results below use highlights from the site until the
+                connection is restored.
+              </p>
+            ) : null}
 
             {results.length > 0 ? (
               <div className="mt-10 flex flex-wrap justify-start gap-4">

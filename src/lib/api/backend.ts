@@ -119,54 +119,62 @@ async function backendFetch(path: string, init?: RequestInit) {
 }
 
 export async function getPublicSiteContentServer(): Promise<PublicSiteContentResponse | null> {
-  const response = await fetch(`${getApiBaseUrl()}/public/site-content`, {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-    },
-    cache: "no-store",
-  });
-  if (!response.ok) return null;
-
-  const payload = (await response.json()) as unknown;
-  if (isPublicSiteContentResponse(payload)) return payload;
-  if (isObject(payload) && isPublicSiteContentResponse(payload.data)) return payload.data;
-  return null;
-}
-
-export async function getPublicPromotionsByCategoryServer(
-  category: string,
-): Promise<PublicSitePromotionResponse[] | null> {
-  const response = await fetch(
-    `${getApiBaseUrl()}/public/promotions?category=${encodeURIComponent(category)}`,
-    {
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/public/site-content`, {
       method: "GET",
       headers: {
         accept: "application/json",
       },
       cache: "no-store",
-    },
-  );
-  if (!response.ok) return null;
+    });
+    if (!response.ok) return null;
 
-  const payload = (await response.json()) as unknown;
-  if (Array.isArray(payload) && payload.every(isPublicSitePromotion)) return payload;
-  if (
-    isObject(payload) &&
-    Array.isArray(payload.promotions) &&
-    payload.promotions.every(isPublicSitePromotion)
-  ) {
-    return payload.promotions;
+    const payload = (await response.json()) as unknown;
+    if (isPublicSiteContentResponse(payload)) return payload;
+    if (isObject(payload) && isPublicSiteContentResponse(payload.data)) return payload.data;
+    return null;
+  } catch {
+    return null;
   }
-  if (
-    isObject(payload) &&
-    isObject(payload.data) &&
-    Array.isArray(payload.data.promotions) &&
-    payload.data.promotions.every(isPublicSitePromotion)
-  ) {
-    return payload.data.promotions;
+}
+
+export async function getPublicPromotionsByCategoryServer(
+  category: string,
+): Promise<PublicSitePromotionResponse[] | null> {
+  try {
+    const response = await fetch(
+      `${getApiBaseUrl()}/public/promotions?category=${encodeURIComponent(category)}`,
+      {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+        },
+        cache: "no-store",
+      },
+    );
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as unknown;
+    if (Array.isArray(payload) && payload.every(isPublicSitePromotion)) return payload;
+    if (
+      isObject(payload) &&
+      Array.isArray(payload.promotions) &&
+      payload.promotions.every(isPublicSitePromotion)
+    ) {
+      return payload.promotions;
+    }
+    if (
+      isObject(payload) &&
+      isObject(payload.data) &&
+      Array.isArray(payload.data.promotions) &&
+      payload.data.promotions.every(isPublicSitePromotion)
+    ) {
+      return payload.data.promotions;
+    }
+    return null;
+  } catch {
+    return null;
   }
-  return null;
 }
 
 export async function searchPublicPromotionsServer(
@@ -181,67 +189,8 @@ export async function searchPublicPromotionsServer(
   }
   if (params.banks && params.banks.length > 0) qs.set("banks", params.banks.join(","));
 
-  const response = await fetch(`${getApiBaseUrl()}/public/promotions/search?${qs.toString()}`, {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-    },
-    cache: "no-store",
-  });
-  if (!response.ok) return null;
-
-  const payload = (await response.json()) as unknown;
-  if (Array.isArray(payload) && payload.every(isPublicSitePromotion)) return payload;
-  if (
-    isObject(payload) &&
-    Array.isArray(payload.promotions) &&
-    payload.promotions.every(isPublicSitePromotion)
-  ) {
-    return payload.promotions;
-  }
-  if (
-    isObject(payload) &&
-    isObject(payload.data) &&
-    Array.isArray(payload.data.promotions) &&
-    payload.data.promotions.every(isPublicSitePromotion)
-  ) {
-    return payload.data.promotions;
-  }
-  return null;
-}
-
-export async function getPublicSearchFiltersServer(): Promise<PublicSearchFiltersResponse | null> {
-  const response = await fetch(`${getApiBaseUrl()}/public/promotions/search-filters`, {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-    },
-    cache: "no-store",
-  });
-  if (!response.ok) return null;
-
-  const payload = (await response.json()) as unknown;
-  if (isPublicSearchFilters(payload)) return payload;
-  if (isObject(payload) && isPublicSearchFilters(payload.filters)) return payload.filters;
-  if (isObject(payload) && isObject(payload.data) && isPublicSearchFilters(payload.data)) {
-    return payload.data;
-  }
-  if (
-    isObject(payload) &&
-    isObject(payload.data) &&
-    isPublicSearchFilters(payload.data.filters)
-  ) {
-    return payload.data.filters;
-  }
-  return null;
-}
-
-export async function getPublicPromotionByIdServer(
-  id: string,
-): Promise<PublicPromotionDetailResponse | null> {
-  if (!id) return null;
   try {
-    const response = await fetch(`${getApiBaseUrl()}/public/promotions/${encodeURIComponent(id)}`, {
+    const response = await fetch(`${getApiBaseUrl()}/public/promotions/search?${qs.toString()}`, {
       method: "GET",
       headers: {
         accept: "application/json",
@@ -251,19 +200,96 @@ export async function getPublicPromotionByIdServer(
     if (!response.ok) return null;
 
     const payload = (await response.json()) as unknown;
-    if (isPublicPromotionDetail(payload)) return payload;
-    if (isObject(payload) && isPublicPromotionDetail(payload.promotion)) return payload.promotion;
-    if (isObject(payload) && isPublicPromotionDetail(payload.data)) return payload.data;
+    if (Array.isArray(payload) && payload.every(isPublicSitePromotion)) return payload;
+    if (
+      isObject(payload) &&
+      Array.isArray(payload.promotions) &&
+      payload.promotions.every(isPublicSitePromotion)
+    ) {
+      return payload.promotions;
+    }
     if (
       isObject(payload) &&
       isObject(payload.data) &&
-      isPublicPromotionDetail(payload.data.promotion)
+      Array.isArray(payload.data.promotions) &&
+      payload.data.promotions.every(isPublicSitePromotion)
     ) {
-      return payload.data.promotion;
+      return payload.data.promotions;
     }
     return null;
   } catch {
     return null;
+  }
+}
+
+export async function getPublicSearchFiltersServer(): Promise<PublicSearchFiltersResponse | null> {
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/public/promotions/search-filters`, {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as unknown;
+    if (isPublicSearchFilters(payload)) return payload;
+    if (isObject(payload) && isPublicSearchFilters(payload.filters)) return payload.filters;
+    if (isObject(payload) && isObject(payload.data) && isPublicSearchFilters(payload.data)) {
+      return payload.data;
+    }
+    if (
+      isObject(payload) &&
+      isObject(payload.data) &&
+      isPublicSearchFilters(payload.data.filters)
+    ) {
+      return payload.data.filters;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export type PublicPromotionByIdResult =
+  | { kind: "ok"; promotion: PublicPromotionDetailResponse }
+  | { kind: "not_found" }
+  | { kind: "unavailable" };
+
+export async function getPublicPromotionByIdServer(id: string): Promise<PublicPromotionByIdResult> {
+  const trimmed = id.trim();
+  if (!trimmed) return { kind: "not_found" };
+  try {
+    const response = await fetch(
+      `${getApiBaseUrl()}/public/promotions/${encodeURIComponent(trimmed)}`,
+      {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+        },
+        cache: "no-store",
+      },
+    );
+    if (response.status === 404) return { kind: "not_found" };
+    if (!response.ok) return { kind: "unavailable" };
+
+    const payload = (await response.json()) as unknown;
+    let promotion: PublicPromotionDetailResponse | null = null;
+    if (isPublicPromotionDetail(payload)) promotion = payload;
+    else if (isObject(payload) && isPublicPromotionDetail(payload.promotion)) promotion = payload.promotion;
+    else if (isObject(payload) && isPublicPromotionDetail(payload.data)) promotion = payload.data;
+    else if (
+      isObject(payload) &&
+      isObject(payload.data) &&
+      isPublicPromotionDetail(payload.data.promotion)
+    ) {
+      promotion = payload.data.promotion;
+    }
+    if (promotion) return { kind: "ok", promotion };
+    return { kind: "unavailable" };
+  } catch {
+    return { kind: "unavailable" };
   }
 }
 

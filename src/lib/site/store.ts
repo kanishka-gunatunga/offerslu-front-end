@@ -9,12 +9,21 @@ import {
 import { defaultSiteContent } from "./default-content";
 import type { SiteContent } from "./types";
 
-export async function getSiteContent(): Promise<SiteContent> {
+export type GetSiteContentResult =
+  | { ok: true; content: SiteContent }
+  | { ok: false };
+
+export async function getSiteContent(): Promise<GetSiteContentResult> {
   const [apiContent, clothingRaw, foodRaw] = await Promise.all([
     getPublicSiteContentServer(),
     getPublicPromotionsByCategoryServer("Fashion & Clothing"),
     getPublicPromotionsByCategoryServer("Food & Dining"),
   ]);
+
+  if (!apiContent) {
+    return { ok: false };
+  }
+
   const backendOrigin = getBackendOrigin();
   const categories = (apiContent?.categories ?? [])
     .filter((c) => Boolean(c.id) && Boolean(c.name))
@@ -84,11 +93,14 @@ export async function getSiteContent(): Promise<SiteContent> {
     }));
 
   return {
-    ...defaultSiteContent,
-    categories: apiContent ? categories : defaultSiteContent.categories,
-    promotions: apiContent ? promotions : defaultSiteContent.promotions,
-    clothingPromotions: clothingRaw ? clothingPromotions : defaultSiteContent.clothingPromotions,
-    foodPromotions: foodRaw ? foodPromotions : defaultSiteContent.foodPromotions,
-    banks: apiContent ? banks : defaultSiteContent.banks,
+    ok: true,
+    content: {
+      ...defaultSiteContent,
+      categories,
+      promotions,
+      clothingPromotions: clothingRaw ? clothingPromotions : defaultSiteContent.clothingPromotions,
+      foodPromotions: foodRaw ? foodPromotions : defaultSiteContent.foodPromotions,
+      banks,
+    },
   };
 }
